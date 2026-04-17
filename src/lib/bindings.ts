@@ -5,8 +5,125 @@
 
 
 export const commands = {
-async greet(name: string) : Promise<string> {
-    return await TAURI_INVOKE("greet", { name });
+async listSports() : Promise<Result<Sport[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("list_sports") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async loadGames(sport: string) : Promise<Result<GameRow[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("load_games", { sport }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async loadProps(sport: string) : Promise<Result<PropRow[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("load_props", { sport }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async findEv(sport: string) : Promise<Result<EVBet[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("find_ev", { sport }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async findPropEv(sport: string) : Promise<Result<EVBet[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("find_prop_ev", { sport }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async findArbs(sport: string) : Promise<Result<ArbBet[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("find_arbs", { sport }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async findPropArbs(sport: string) : Promise<Result<ArbBet[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("find_prop_arbs", { sport }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async findMiddles(sport: string) : Promise<Result<MiddleBet[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("find_middles", { sport }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async findPropMiddles(sport: string) : Promise<Result<MiddleBet[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("find_prop_middles", { sport }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async storedEv(sport: string, isProps: boolean) : Promise<Result<StoredEVBet[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("stored_ev", { sport, isProps }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getBudget() : Promise<Result<BudgetState, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_budget") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getSettings() : Promise<Result<Settings, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_settings") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async saveSettings(update: Settings) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("save_settings", { update }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setAltLines(enabled: boolean) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_alt_lines", { enabled }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async forceRefresh(sport: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("force_refresh", { sport }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 

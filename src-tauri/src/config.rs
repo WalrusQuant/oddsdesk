@@ -221,6 +221,15 @@ pub fn load_settings(project_root: &Path) -> AppResult<Settings> {
     Ok(settings)
 }
 
+/// Persist settings to `settings.yaml`. Note: drops any inline comments
+/// previously in the file (serde_yaml doesn't preserve them). `api_key` is
+/// `#[serde(skip_serializing)]` so it's never written — it lives in `.env`.
+pub fn save_settings_yaml(project_root: &Path, settings: &Settings) -> AppResult<()> {
+    let yaml = serde_yaml::to_string(settings)?;
+    std::fs::write(project_root.join("settings.yaml"), yaml)?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,0 +1,27 @@
+bookmakers:
+- fanduel
+- draftkings
+ev_reference: market_average
+sports:
+- basketball_nba
+odds_refresh_interval: 60
+scores_refresh_interval: 60
+ev_threshold: -100.0
+ev_odds_min: -10000.0
+ev_odds_max: 10000.0
+odds_format: american
+regions:
+- us
+low_credit_warning: 50
+critical_credit_stop: 10
+props_enabled: true
+props_refresh_interval: 300
+props_max_concurrent: 3
+alt_lines_enabled: false
+arb_enabled: true
+arb_min_profit_pct: 0.0
+middle_enabled: true
+middle_min_window: 0.5
+middle_max_combined_cost: 1.08
+dfs_books: {}
+props_markets: {}
