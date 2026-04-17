@@ -37,13 +37,13 @@ fn default_test_settings() -> Settings {
         ev_odds_min: -10_000.0,
         ev_odds_max: 10_000.0,
         odds_format: "american".into(),
-        regions: vec!["us".into()],
+        regions_games: vec!["us".into()],
+        regions_props: vec!["us".into()],
         low_credit_warning: 50,
         critical_credit_stop: 10,
         props_enabled: true,
         props_refresh_interval: 300,
         props_max_concurrent: 3,
-        alt_lines_enabled: false,
         arb_enabled: true,
         arb_min_profit_pct: 0.0,
         middle_enabled: true,
@@ -297,17 +297,30 @@ async fn save_settings_invalidates_caches() {
     assert_eq!(events.len(), 2);
 }
 
-// ── alt lines toggle ────────────────────────────────────────────────────────
+// ── alt lines on-demand ─────────────────────────────────────────────────────
 
 #[tokio::test]
-async fn set_alt_lines_enabled_toggle() {
+async fn fetch_alt_lines_for_event_caches_per_event() {
     let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/sports/basketball_nba/events/event-nba-001/odds"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_raw(fixture("event_odds_props.json"), "application/json"),
+        )
+        .expect(1) // second call hits cache
+        .mount(&server)
+        .await;
+
     let svc = make_service(&server.uri(), default_test_settings());
-    assert!(!svc.settings_snapshot().await.alt_lines_enabled);
-    svc.set_alt_lines_enabled(true).await;
-    assert!(svc.settings_snapshot().await.alt_lines_enabled);
-    svc.set_alt_lines_enabled(false).await;
-    assert!(!svc.settings_snapshot().await.alt_lines_enabled);
+    let first = svc
+        .fetch_alt_lines_for_event("basketball_nba", "event-nba-001")
+        .await;
+    assert!(first.is_some(), "first call should return an event");
+    let second = svc
+        .fetch_alt_lines_for_event("basketball_nba", "event-nba-001")
+        .await;
+    assert!(second.is_some(), "cached call should still return");
 }
 
 // ── find_ev persists to store ────────────────────────────────────────────────

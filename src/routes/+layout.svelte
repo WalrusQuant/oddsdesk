@@ -1,6 +1,8 @@
 <script lang="ts">
   import '../app.css';
   import type { Snippet } from 'svelte';
+  import { listen } from '@tauri-apps/api/event';
+  import { getCurrentWindow } from '@tauri-apps/api/window';
   import { app } from '$lib/stores/app.svelte';
   import { data } from '$lib/stores/data.svelte';
   import { budget } from '$lib/stores/budget.svelte';
@@ -15,6 +17,44 @@
 
   let { children }: Props = $props();
 
+  // Pin the shell height to the WebView's actual viewport. Prior macOS-host
+  // bugs had `window.innerHeight` stuck at a bogus value, so we also listen
+  // to the Rust-emitted `window-resized` event as a second source and take
+  // the smaller of the two (the WebView can't render taller than its own
+  // viewport without clipping).
+  $effect(() => {
+    let rustHeight: number | null = null;
+    let rustWidth: number | null = null;
+    const apply = (source: string) => {
+      const viewportH = window.innerHeight;
+      const viewportW = window.innerWidth;
+      const h = rustHeight !== null ? Math.min(rustHeight, viewportH) : viewportH;
+      const w = rustWidth !== null ? Math.min(rustWidth, viewportW) : viewportW;
+      document.documentElement.style.setProperty('--app-height', `${h}px`);
+      document.documentElement.style.setProperty('--app-width', `${w}px`);
+      console.info(`[layout] ${source} -> ${w}x${h} (innerHeight=${viewportH} rustHeight=${rustHeight})`);
+    };
+
+    apply('init');
+
+    const onResize = () => apply('window.onresize');
+    window.addEventListener('resize', onResize);
+
+    let unlisten: (() => void) | undefined;
+    listen<{ width: number; height: number }>('window-resized', (e) => {
+      rustHeight = e.payload.height;
+      rustWidth = e.payload.width;
+      apply('rust-event');
+    }).then((fn) => {
+      unlisten = fn;
+    });
+
+    return () => {
+      window.removeEventListener('resize', onResize);
+      unlisten?.();
+    };
+  });
+
   // Initial bootstrap: settings + keybindings
   $effect(() => {
     let cancelled = false;
@@ -24,7 +64,6 @@
         const s = await api.getSettings();
         if (!cancelled) {
           settings.current = s;
-          app.altLinesEnabled = s.alt_lines_enabled ?? false;
           const sports = s.sports ?? [];
           if (sports.length > 0 && !sports.includes(app.currentSport)) {
             app.currentSport = sports[0];

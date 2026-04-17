@@ -254,3 +254,60 @@ Bugs identified in the code review, deliberately preserved during parity port. E
 - Float precision: chose 1e-6 epsilon; actual observed drift on no-vig → fair_american → EV% chains stays under ~1e-8.
 - HashMap-iteration non-determinism bit twice (arb + middles) — fixed by sorting side keys alphabetically (arbs) and preserving insertion order for team/player pairing (middles). Parity passes 5/5 runs. If we encounter this again, consider `indexmap` crate as a project-wide convention.
 - Known follow-ups tracked in Phase 3b above.
+
+---
+
+## Open bugs / follow-ups (2026-04-16)
+
+### 🔴 API polling burns far more credits than expected — needs full audit
+
+User observation: ~24% of credit pool consumed on a single session that was *open less than an hour, looked at NBA moneylines only* (no props, no sport-hopping known). Measured burn rate doesn't match hours of exposure. Something is polling more than the documented pattern suggests.
+
+**Initial audit math (per-minute, NBA with 8 games, current `settings.yaml`):**
+- `/odds` (h2h+spreads+totals × regions us,us2,us_ex,us_dfs) = 4 × 3 = **12 cr**
+- `/scores?daysFrom=1` = **2 cr**
+- `alt_lines_enabled: true` → `/events/{id}/odds?markets=alt_spreads,alt_totals` × 8 games × 4 regions × 2 markets = **64 cr**
+- Sum: ~78 cr/min → ~4,700 cr/hr (≈24% of a 20k pool per hour)
+
+**The 64 cr/min alt-lines drain runs on every games poll regardless of whether any game is expanded on screen.** `DataService::get_game_rows` calls `fetch_alt_lines` whenever `alt_lines_enabled` is true; the flag is independent of the frontend's per-game chevron expansion state.
+
+**But the user's burn is still too fast for just this math if the app was closed most of the time.** Review must confirm:
+1. Nothing is polling while the window is not visible (check `visibilitychange`, Tauri lifecycle).
+2. Closing the window actually tears down the `$effect` pollers (not orphaned intervals on re-open).
+3. `+layout.svelte:96` — the 30s signals `$effect` fires 3 concurrent IPC calls (`findEv` / `findArbs` / `findMiddles`). Each one independently calls `fetch_odds` in Rust. `TtlCache` is **not** request-coalescing; if all 3 race in when the `odds_cache` just expired, they can each trigger a fresh `/odds` fetch. Worst case: 3× the `/odds` credit cost on that tick.
+4. Sport-switching resets caches per-sport; cycling NBA → MLB → NHL forces three cold fetches.
+5. Verify what `api_client.last_credits` reports vs actual Odds API `x-requests-used` / `x-requests-remaining` headers — could be a display/tracking bug showing fewer credits than actually consumed.
+
+**Proposed fix (already scoped, not yet implemented):**
+- New Tauri command `fetch_alt_lines_for_event(sport, event_id) -> Event` that fetches alt markets for one event only.
+- Remove the auto-fetch from `get_game_rows`.
+- `GamesTable.svelte` calls the command when the user expands a game's chevron, merges returned alt markets into that game row, and caches per-event on the frontend.
+- `alt_lines_enabled` / `l` keybind become a no-op or are repurposed (probably remove).
+- Also add request-coalescing (single-flight) to `store/cache.rs` so concurrent cache-misses share a `Shared<Future>` rather than fanning out.
+
+**Quick stopgap:** default `alt_lines_enabled: false` in `settings.yaml` and `config.rs` default. Trim `regions` to `us,us2` unless `us_dfs` is actively in use. Bump `odds_refresh_interval` to 120–180s.
+
+### 🔴 Window/WebView viewport is smaller than the native window
+
+`window.innerHeight` / `document.documentElement.clientHeight` both report **368px** while the visible native window is clearly ~1500px+. Shell correctly sizes to `100vh` = 368, so the status bar renders at the bottom of a 368-pixel region that's offset from the bottom of the actual window, leaving a large dead band below it. User sees this as "the screen isn't the whole thing" — status bar floats mid-window, more dead space with fewer games (since content doesn't push the 368-tall grid further).
+
+**What I tried and didn't fix it:**
+- `overflow: hidden` on html/body
+- `.shell { position: fixed; inset: 0 }` (made it *worse* — different/smaller fixed-position viewport)
+- `minmax(0, 1fr)` on the 1fr row (correct fix if shell were 100vh of the real window, but it isn't)
+- `100dvh` / `100%` variants
+- JS-driven `--app-height` CSS var fed by `window.innerHeight` / `visualViewport.height` / `ResizeObserver` (all stuck at 368)
+- Even calling Tauri's `getCurrentWindow().innerSize()` / `scaleFactor()` from JS and subscribing to `onResized()` — the values via Tauri's API also didn't produce a viewport that matches the visible window.
+
+**Hypothesis:** the WKWebView on macOS is being created at the initial window size and isn't resizing its content layer when the native window grows (after user-maximize or after initial render). Likely a Tauri-level issue. Need to investigate:
+- Whether the webview's `NSView` autoresizing mask is set correctly by Tauri 2.
+- Whether this is a known Tauri 2 issue on macOS 14/15 — check Tauri GitHub.
+- Try setting the window size programmatically from Rust after the setup closure (`app.get_window("main").unwrap().set_size(...)` or `.maximize()`).
+- Try `decorations: false` + custom title bar to see if the native chrome is eating the delta.
+- Try a minimal repro Tauri app to isolate whether it's our CSS or Tauri itself.
+
+**Changes reverted during debugging:** layout CSS and the JS viewport tracker were all rolled back to the pre-session state (see git history). Only the ArbPanel key fix and the `visiblePanels` default flip remained.
+
+### ✅ Fixed this session
+- `ArbPanel.svelte` `#each` key was missing `point_a` / `point_b`, causing `each_key_duplicate` crash when two arbs share book+outcome on different points. Crash was freezing the entire reactive tree, which manifested as "clicks don't work anywhere." Fix is committed in-progress locally (not yet pushed).
+- `visiblePanels` defaults flipped to `{ev: true, arb: true, middles: true}` so all three signal headers show on first load.

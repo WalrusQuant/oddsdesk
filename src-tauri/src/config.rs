@@ -37,8 +37,11 @@ pub struct Settings {
     #[serde(default = "default_odds_format")]
     pub odds_format: String,
 
-    #[serde(default = "default_regions")]
-    pub regions: Vec<String>,
+    #[serde(default = "default_regions_games")]
+    pub regions_games: Vec<String>,
+
+    #[serde(default = "default_regions_props")]
+    pub regions_props: Vec<String>,
 
     #[serde(default = "default_low_credit_warning")]
     pub low_credit_warning: u32,
@@ -54,9 +57,6 @@ pub struct Settings {
 
     #[serde(default = "default_props_max_concurrent")]
     pub props_max_concurrent: u32,
-
-    #[serde(default)]
-    pub alt_lines_enabled: bool,
 
     #[serde(default = "default_true_bool")]
     pub arb_enabled: bool,
@@ -81,8 +81,12 @@ pub struct Settings {
 }
 
 impl Settings {
-    pub fn regions_str(&self) -> String {
-        self.regions.join(",")
+    pub fn regions_games_str(&self) -> String {
+        self.regions_games.join(",")
+    }
+
+    pub fn regions_props_str(&self) -> String {
+        self.regions_props.join(",")
     }
 }
 
@@ -125,8 +129,11 @@ fn default_ev_odds_max() -> f64 {
 fn default_odds_format() -> String {
     "american".to_string()
 }
-fn default_regions() -> Vec<String> {
+fn default_regions_games() -> Vec<String> {
     vec!["us".to_string(), "us2".to_string(), "us_ex".to_string()]
+}
+fn default_regions_props() -> Vec<String> {
+    vec!["us".to_string(), "us2".to_string(), "us_dfs".to_string()]
 }
 fn default_low_credit_warning() -> u32 {
     50
@@ -249,7 +256,10 @@ mod tests {
         assert!(!settings.bookmakers.is_empty());
         assert_eq!(settings.ev_reference, "market_average");
         assert!(settings.ev_threshold > 0.0);
-        assert_eq!(settings.regions_str(), settings.regions.join(","));
+        assert!(!settings.regions_games.is_empty());
+        assert!(!settings.regions_props.is_empty());
+        assert_eq!(settings.regions_games_str(), settings.regions_games.join(","));
+        assert_eq!(settings.regions_props_str(), settings.regions_props.join(","));
     }
 
     #[test]

@@ -45,7 +45,7 @@
       <div class="state empty">no middle opportunities</div>
     {:else}
       <ul class="list">
-        {#each bets as m (m.event_id + m.book_a + m.book_b + String(m.line_a) + String(m.line_b))}
+        {#each bets as m (m.event_id + m.market + (m.player_name ?? '') + m.book_a + m.book_b + m.outcome_a + m.outcome_b + String(m.line_a) + String(m.line_b))}
           {@const s = sizing(m.odds_a, m.odds_b)}
           {@const evPct = m.ev_percentage ?? 0}
           {@const hitProb = m.hit_prob ?? 0}

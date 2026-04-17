@@ -109,9 +109,9 @@ async saveSettings(update: Settings) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async setAltLines(enabled: boolean) : Promise<Result<null, string>> {
+async fetchAltLinesForEvent(sport: string, eventId: string) : Promise<Result<Event | null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("set_alt_lines", { enabled }) };
+    return { status: "ok", data: await TAURI_INVOKE("fetch_alt_lines_for_event", { sport, eventId }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -149,7 +149,7 @@ export type OutcomeOdds = { name: string; price: number; point?: number | null; 
 export type PropRow = { event_id: string; sport_key: string; home_team: string; away_team: string; commence_time: string; player_name: string; market_key: string; consensus_point?: number | null; over_odds?: Partial<{ [key in string]: number }>; under_odds?: Partial<{ [key in string]: number }> }
 export type Score = { id: string; sport_key: string; sport_title?: string; commence_time: string; home_team: string; away_team: string; completed?: boolean; last_update?: string | null; scores?: ScoreValue[] | null }
 export type ScoreValue = { name: string; score?: string | null }
-export type Settings = { bookmakers?: string[]; ev_reference?: string; sports?: string[]; odds_refresh_interval?: number; scores_refresh_interval?: number; ev_threshold?: number; ev_odds_min?: number; ev_odds_max?: number; odds_format?: string; regions?: string[]; low_credit_warning?: number; critical_credit_stop?: number; props_enabled?: boolean; props_refresh_interval?: number; props_max_concurrent?: number; alt_lines_enabled?: boolean; arb_enabled?: boolean; arb_min_profit_pct?: number; middle_enabled?: boolean; middle_min_window?: number; middle_max_combined_cost?: number; dfs_books?: Partial<{ [key in string]: number }>; props_markets?: Partial<{ [key in string]: string[] }> }
+export type Settings = { bookmakers?: string[]; ev_reference?: string; sports?: string[]; odds_refresh_interval?: number; scores_refresh_interval?: number; ev_threshold?: number; ev_odds_min?: number; ev_odds_max?: number; odds_format?: string; regions_games?: string[]; regions_props?: string[]; low_credit_warning?: number; critical_credit_stop?: number; props_enabled?: boolean; props_refresh_interval?: number; props_max_concurrent?: number; arb_enabled?: boolean; arb_min_profit_pct?: number; middle_enabled?: boolean; middle_min_window?: number; middle_max_combined_cost?: number; dfs_books?: Partial<{ [key in string]: number }>; props_markets?: Partial<{ [key in string]: string[] }> }
 export type Sport = { key: string; group: string; title: string; description?: string; active?: boolean; has_outrights?: boolean }
 export type StoredEVBet = { id: number; sport_key: string; book: string; book_title: string; event_id: string; home_team: string; away_team: string; market: string; outcome_name: string; outcome_point: number | null; odds: number; fair_odds: number; no_vig_prob: number; ev_percentage: number; edge: number; num_books: number; detected_at: string; last_seen_at: string; is_active: boolean; player_name: string | null; is_prop: boolean; minutes_active: number }
 

@@ -11,10 +11,9 @@ class AppStore {
   viewMode = $state<ViewMode>('games');
   visiblePanels = $state<Record<PanelName, boolean>>({
     ev: true,
-    arb: false,
-    middles: false,
+    arb: true,
+    middles: true,
   });
-  altLinesEnabled = $state<boolean>(false);
   settingsDrawerOpen = $state<boolean>(false);
 
   // Games view state

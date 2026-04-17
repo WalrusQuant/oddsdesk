@@ -54,6 +54,12 @@ impl<V: Clone> TtlCache<V> {
         }
     }
 
+    pub fn invalidate_prefix(&self, prefix: &str) {
+        if let Ok(mut guard) = self.store.write() {
+            guard.retain(|k, _| !k.starts_with(prefix));
+        }
+    }
+
     pub fn clear(&self) {
         if let Ok(mut guard) = self.store.write() {
             guard.clear();

@@ -11,38 +11,6 @@ and Rust. Ported from the original Python Textual TUI (preserved under
 
 ---
 
-## Download
-
-Grab the latest build from the [Releases page](../../releases).
-
-### macOS (Apple Silicon)
-
-1. Download `OddsDesk_X.Y.Z_aarch64.dmg`.
-2. Open the DMG and drag **OddsDesk.app** to **/Applications**.
-3. On first launch, macOS will complain that the app isn't signed. Two fixes:
-   - Right-click **OddsDesk.app** → **Open** → click **Open** in the dialog.
-   - Or from Terminal:
-     ```bash
-     xattr -dr com.apple.quarantine /Applications/OddsDesk.app
-     ```
-
-### macOS (Intel)
-
-1. Download `OddsDesk_X.Y.Z_x64.dmg`.
-2. Same steps as above.
-
-### Windows (x64)
-
-1. Download `OddsDesk_X.Y.Z_x64_en-US.msi`.
-2. Run the installer. Windows SmartScreen may warn — click **More info** →
-   **Run anyway**.
-
-### Linux
-
-Not shipped yet. Build from source instructions below.
-
----
-
 ## First-time setup
 
 OddsDesk needs an API key from [The Odds API](https://the-odds-api.com/).
@@ -155,15 +123,15 @@ in-app Settings drawer; the full list with defaults:
 | --- | --- | --- |
 | `sports` | NFL, NBA, MLB, NHL, NCAAB | Which sports to show as tabs |
 | `bookmakers` | 20+ US books | Books to compare odds across |
-| `regions` | us, us2, us_ex, us_dfs | API regions to pull from |
-| `odds_refresh_interval` | 60 | Seconds between odds refreshes |
+| `regions_games` | us, us2, us_ex | Regions for game-line `/odds` + alt-lines |
+| `regions_props` | us, us2, us_dfs | Regions for player-prop `/events/{id}/odds` |
+| `odds_refresh_interval` | 120 | Seconds between odds refreshes |
 | `scores_refresh_interval` | 60 | Seconds between scores refreshes |
 | `props_refresh_interval` | 300 | Seconds between props refreshes |
 | `props_max_concurrent` | 5 | Max parallel event fetches for props |
 | `ev_threshold` | 2.0 | Minimum EV% to flag a bet |
 | `ev_odds_min` / `ev_odds_max` | -200 / 200 | Restrict EV flagging to a price range |
 | `odds_format` | american | `american` or `decimal` |
-| `alt_lines_enabled` | false | Fetch alternate spreads/totals |
 | `arb_enabled` | true | Run arb detection |
 | `arb_min_profit_pct` | 0.1 | Minimum profit % to surface an arb |
 | `middle_enabled` | true | Run middles detection |

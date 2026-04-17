@@ -1,5 +1,5 @@
 import { commands, type Result } from './bindings';
-import type { Settings } from './bindings';
+import type { Event, Settings } from './bindings';
 
 async function unwrap<T>(p: Promise<Result<T, string>>): Promise<T> {
   const r = await p;
@@ -21,6 +21,7 @@ export const api = {
   getBudget: () => unwrap(commands.getBudget()),
   getSettings: () => unwrap(commands.getSettings()),
   saveSettings: (update: Settings) => unwrap(commands.saveSettings(update)),
-  setAltLines: (enabled: boolean) => unwrap(commands.setAltLines(enabled)),
+  fetchAltLinesForEvent: (sport: string, eventId: string): Promise<Event | null> =>
+    unwrap(commands.fetchAltLinesForEvent(sport, eventId)),
   forceRefresh: (sport: string) => unwrap(commands.forceRefresh(sport)),
 };

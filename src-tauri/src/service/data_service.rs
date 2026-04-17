@@ -15,11 +15,9 @@ use crate::engine::{
 };
 use crate::errors::AppResult;
 use crate::models::{
-    ArbBet, Bookmaker, BudgetState, EVBet, Event, GameRow, Market, MiddleBet, PropRow, Score,
-    Sport, StoredEVBet,
+    ArbBet, BudgetState, EVBet, Event, GameRow, MiddleBet, PropRow, Score, Sport, StoredEVBet,
 };
 use crate::store::{BudgetTracker, EvStore, TtlCache};
-use futures::stream::{self, StreamExt};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -29,8 +27,6 @@ use tokio::sync::{Mutex, RwLock};
 const ALT_MARKETS: &str = "alternate_spreads,alternate_totals";
 const SPORTS_TTL: Duration = Duration::from_secs(3600);
 const EVENTS_CHECK_TTL: Duration = Duration::from_secs(600);
-
-pub type AltData = HashMap<String, Vec<(String, String, Vec<Market>)>>;
 
 pub struct DataService {
     inner: Arc<DataServiceInner>,
@@ -47,7 +43,7 @@ struct DataServiceInner {
     events_check_cache: TtlCache<bool>,
     scores_cache: TtlCache<Vec<Score>>,
     odds_cache: TtlCache<Vec<Event>>,
-    alt_cache: TtlCache<AltData>,
+    alt_cache: TtlCache<Event>,
     props_cache: TtlCache<Vec<Event>>,
 
     sports_fallback: RwLock<Vec<Sport>>,
@@ -191,7 +187,7 @@ impl DataService {
         }
 
         let settings = self.inner.settings.read().await.clone();
-        let regions = settings.regions_str();
+        let regions = settings.regions_games_str();
         let query = OddsQuery {
             regions: &regions,
             markets: "h2h,spreads,totals",
@@ -212,72 +208,44 @@ impl DataService {
         }
     }
 
-    pub async fn fetch_alt_lines(&self, sport: &str, events: &mut Vec<Event>) {
-        let settings = self.inner.settings.read().await.clone();
-        if !settings.alt_lines_enabled || events.is_empty() {
-            return;
-        }
-
-        let key = format!("{sport}:odds:alt");
+    /// Fetch alternate spreads/totals for a single event on demand (chevron
+    /// click in the games table). Alt markets are not used by the EV/arb/
+    /// middle engine — this exists solely to populate the expanded sub-rows
+    /// for the one event the user asked about.
+    pub async fn fetch_alt_lines_for_event(
+        &self,
+        sport: &str,
+        event_id: &str,
+    ) -> Option<Event> {
+        let key = format!("{sport}:alt:{event_id}");
         if let Some(cached) = self.inner.alt_cache.get(&key) {
-            merge_alt_data(events, &cached);
-            return;
+            return Some(cached);
         }
-
         if !self.inner.budget.lock().await.can_fetch_odds() {
-            return;
+            tracing::warn!("budget low, skipping alt-line fetch");
+            return None;
         }
 
-        let max_concurrent = settings.props_max_concurrent.max(1) as usize;
-        let event_ids: Vec<String> = events.iter().map(|e| e.id.clone()).collect();
-        let client = &self.inner.client;
-        let regions = settings.regions_str();
-        let odds_format = settings.odds_format.clone();
-        let bookmakers = settings.bookmakers.clone();
+        let settings = self.inner.settings.read().await.clone();
+        let regions = settings.regions_games_str();
+        let query = OddsQuery {
+            regions: &regions,
+            markets: ALT_MARKETS,
+            odds_format: &settings.odds_format,
+            bookmakers: Some(&settings.bookmakers),
+        };
 
-        let fetched: Vec<(String, Vec<(String, String, Vec<Market>)>)> =
-            stream::iter(event_ids.into_iter())
-                .map(|eid| {
-                    let regions = regions.clone();
-                    let odds_format = odds_format.clone();
-                    let bookmakers = bookmakers.clone();
-                    let sport = sport.to_string();
-                    async move {
-                        let query = OddsQuery {
-                            regions: &regions,
-                            markets: ALT_MARKETS,
-                            odds_format: &odds_format,
-                            bookmakers: Some(&bookmakers),
-                        };
-                        match get_event_odds(client, &sport, &eid, query).await {
-                            Ok(alt_event) => {
-                                let entries: Vec<(String, String, Vec<Market>)> = alt_event
-                                    .bookmakers
-                                    .into_iter()
-                                    .filter(|bm| !bm.markets.is_empty())
-                                    .map(|bm| (bm.key, bm.title, bm.markets))
-                                    .collect();
-                                Some((eid, entries))
-                            }
-                            Err(e) => {
-                                tracing::warn!(event_id = %eid, error = %e, "alt fetch failed");
-                                None
-                            }
-                        }
-                    }
-                })
-                .buffer_unordered(max_concurrent)
-                .filter_map(|opt| async move { opt })
-                .collect()
-                .await;
-
-        self.sync_budget().await;
-
-        if !fetched.is_empty() {
-            let alt_data: AltData = fetched.into_iter().collect();
-            let ttl = Duration::from_secs(settings.odds_refresh_interval as u64);
-            self.inner.alt_cache.set(&key, alt_data.clone(), ttl);
-            merge_alt_data(events, &alt_data);
+        match get_event_odds(&self.inner.client, sport, event_id, query).await {
+            Ok(event) => {
+                self.sync_budget().await;
+                let ttl = Duration::from_secs(settings.odds_refresh_interval as u64);
+                self.inner.alt_cache.set(&key, event.clone(), ttl);
+                Some(event)
+            }
+            Err(e) => {
+                tracing::warn!(sport = %sport, event_id = %event_id, error = %e, "alt fetch failed");
+                None
+            }
         }
     }
 
@@ -314,7 +282,7 @@ impl DataService {
         }
 
         // Step 2: fetch props per-event concurrently
-        let regions = settings.regions_str();
+        let regions = settings.regions_props_str();
         let markets_str = markets.join(",");
         let query = OddsQuery {
             regions: &regions,
@@ -340,13 +308,8 @@ impl DataService {
     // ── Merged views ───────────────────────────────────────────────────────
 
     pub async fn get_game_rows(&self, sport: &str) -> Vec<GameRow> {
-        let (scores, mut events) =
+        let (scores, events) =
             tokio::join!(self.fetch_scores(sport), self.fetch_odds(sport));
-
-        let alt_enabled = self.inner.settings.read().await.alt_lines_enabled;
-        if alt_enabled {
-            self.fetch_alt_lines(sport, &mut events).await;
-        }
 
         let mut score_map: HashMap<String, Score> = HashMap::new();
         for s in &scores {
@@ -610,43 +573,11 @@ impl DataService {
         Ok(())
     }
 
-    pub async fn set_alt_lines_enabled(&self, enabled: bool) {
-        self.inner.settings.write().await.alt_lines_enabled = enabled;
-        // Alt cache should reset so toggling off clears the merged data.
-        self.inner.alt_cache.clear();
-        self.inner.odds_cache.clear();
-    }
-
     pub async fn force_refresh(&self, sport: &str) {
         self.inner.scores_cache.invalidate(&format!("{sport}:scores"));
         self.inner.odds_cache.invalidate(&format!("{sport}:odds"));
-        self.inner.alt_cache.invalidate(&format!("{sport}:odds:alt"));
+        self.inner.alt_cache.invalidate_prefix(&format!("{sport}:alt:"));
         self.inner.props_cache.invalidate(&format!("{sport}:props"));
-    }
-}
-
-fn merge_alt_data(events: &mut [Event], alt: &AltData) {
-    let mut event_idx: HashMap<String, usize> = HashMap::new();
-    for (i, e) in events.iter().enumerate() {
-        event_idx.insert(e.id.clone(), i);
-    }
-    for (event_id, entries) in alt {
-        let Some(&idx) = event_idx.get(event_id) else {
-            continue;
-        };
-        let event = &mut events[idx];
-        for (book_key, book_title, markets) in entries {
-            if let Some(bm) = event.bookmakers.iter_mut().find(|b| &b.key == book_key) {
-                bm.markets.extend(markets.clone());
-            } else {
-                event.bookmakers.push(Bookmaker {
-                    key: book_key.clone(),
-                    title: book_title.clone(),
-                    last_update: None,
-                    markets: markets.clone(),
-                });
-            }
-        }
     }
 }
 

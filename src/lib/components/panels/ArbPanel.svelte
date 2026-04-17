@@ -47,7 +47,7 @@
       <div class="state empty">no arb opportunities</div>
     {:else}
       <ul class="list">
-        {#each bets as b (b.event_id + b.book_a + b.book_b + b.outcome_a + b.outcome_b)}
+        {#each bets as b (b.event_id + b.market + (b.player_name ?? '') + b.book_a + b.book_b + b.outcome_a + b.outcome_b + String(b.point_a) + String(b.point_b))}
           {@const s = sizing(b.odds_a, b.odds_b)}
           <li>
             <div class="profit" class:pos={b.profit_pct > 0}>

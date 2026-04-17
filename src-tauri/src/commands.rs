@@ -3,7 +3,9 @@
 //! generated TS types use `string` for the error channel uniformly.
 
 use crate::config::Settings;
-use crate::models::{ArbBet, BudgetState, EVBet, GameRow, MiddleBet, PropRow, Sport, StoredEVBet};
+use crate::models::{
+    ArbBet, BudgetState, EVBet, Event, GameRow, MiddleBet, PropRow, Sport, StoredEVBet,
+};
 use crate::service::DataService;
 use std::sync::Arc;
 use tauri::State;
@@ -99,9 +101,12 @@ pub async fn save_settings(update: Settings, svc: ServiceState<'_>) -> Result<()
 
 #[tauri::command]
 #[specta::specta]
-pub async fn set_alt_lines(enabled: bool, svc: ServiceState<'_>) -> Result<(), String> {
-    svc.set_alt_lines_enabled(enabled).await;
-    Ok(())
+pub async fn fetch_alt_lines_for_event(
+    sport: String,
+    event_id: String,
+    svc: ServiceState<'_>,
+) -> Result<Option<Event>, String> {
+    Ok(svc.fetch_alt_lines_for_event(&sport, &event_id).await)
 }
 
 #[tauri::command]

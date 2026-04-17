@@ -292,12 +292,18 @@
     line-height: 14px;
   }
   .cell.player {
-    grid-row: span 2;
     text-align: left;
     padding-left: var(--sp-3);
     font-family: var(--font-sans);
     font-weight: 600;
-    align-self: center;
+  }
+  .row.under .cell {
+    padding-top: 0;
+    padding-bottom: 6px;
+  }
+  .row.over .cell {
+    padding-top: 6px;
+    padding-bottom: 0;
   }
   .cell.line {
     color: var(--warning);

@@ -2,6 +2,7 @@
   import { app } from '$lib/stores/app.svelte';
   import { data } from '$lib/stores/data.svelte';
   import { settings } from '$lib/stores/settings.svelte';
+  import { api } from '$lib/ipc';
   import { computeInlineEv, consensusSpread, consensusTotal } from '$lib/display/consensus';
   import {
     bestPriceWithBook,
@@ -14,23 +15,58 @@
   import { formatOdds, formatEv, formatTime, truncate } from '$lib/display/format';
   import { bookShort, GAME_FILTERS, MARKET_LABELS } from '$lib/display/constants';
   import SegmentedControl from './tables/SegmentedControl.svelte';
-  import type { GameRow } from '$lib/bindings';
+  import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+  import type { Bookmaker, GameRow } from '$lib/bindings';
 
   const displayBooks = $derived(settings.current?.bookmakers ?? []);
   const dfsBooks = $derived(settings.current?.dfs_books ?? {});
-  const altLines = $derived(app.altLinesEnabled);
   const market = $derived(app.gamesMarket);
   const filter = $derived(app.gameFilter);
 
-  // Per-game alt-line expansion. Decoupled from app.altLinesEnabled:
-  // that flag controls whether alt data is fetched; this controls
-  // whether an individual game's alts are rendered. Collapsed by
-  // default so enabling alt lines doesn't crowd the whole table.
-  let expanded = $state<Set<string>>(new Set());
+  // Per-game alt-line expansion + on-demand fetch state. Alt lines are
+  // NOT preloaded on poll — they're fetched when the user opens a
+  // specific event's chevron, cached per-event for the session.
+  //
+  // Must use SvelteSet/SvelteMap for reactivity — plain Set/Map mutations
+  // don't trip the $state proxy.
+  const expanded = new SvelteSet<string>();
+  const altByEvent = new SvelteMap<string, Bookmaker[]>();
+  const fetchingAlt = new SvelteSet<string>();
 
-  function toggleExpanded(id: string) {
-    if (expanded.has(id)) expanded.delete(id);
-    else expanded.add(id);
+  async function toggleExpanded(id: string) {
+    if (expanded.has(id)) {
+      expanded.delete(id);
+      return;
+    }
+    expanded.add(id);
+    if (altByEvent.has(id) || fetchingAlt.has(id)) return;
+    fetchingAlt.add(id);
+    try {
+      const ev = await api.fetchAltLinesForEvent(app.currentSport, id);
+      altByEvent.set(id, ev?.bookmakers ?? []);
+    } catch (err) {
+      console.error('[alt-lines] fetch failed', err);
+      altByEvent.set(id, []);
+    } finally {
+      fetchingAlt.delete(id);
+    }
+  }
+
+  function mergeAlt(g: GameRow, alt: Bookmaker[] | undefined): GameRow {
+    if (!alt || alt.length === 0) return g;
+    const byKey = new Map<string, Bookmaker>();
+    for (const b of g.bookmakers ?? []) {
+      byKey.set(b.key, { ...b, markets: [...(b.markets ?? [])] });
+    }
+    for (const ab of alt) {
+      const existing = byKey.get(ab.key);
+      if (existing) {
+        existing.markets = [...(existing.markets ?? []), ...(ab.markets ?? [])];
+      } else {
+        byKey.set(ab.key, ab);
+      }
+    }
+    return { ...g, bookmakers: Array.from(byKey.values()) };
   }
 
   function filterGames(games: GameRow[], f: typeof filter): GameRow[] {
@@ -135,7 +171,8 @@
         <div class="empty">No games for {app.currentSport}</div>
       {/if}
 
-      {#each filtered as game (game.event_id)}
+      {#each filtered as baseGame (baseGame.event_id)}
+        {@const game = mergeAlt(baseGame, altByEvent.get(baseGame.event_id))}
         {@const time = timeLabel(game)}
         {@const outcomes = outcomeForMarket(game, market)}
         {@const aPrices = allPrices(game, outcomes.away.name, market, outcomes.away.point, dfsBooks)}
@@ -145,24 +182,26 @@
         {@const aBest = bestPriceWithBook(game, outcomes.away.name, market, outcomes.away.point, dfsBooks)}
         {@const hBest = bestPriceWithBook(game, outcomes.home.name, market, outcomes.home.point, dfsBooks)}
         {@const altPts =
-          !altLines || market === 'h2h'
+          market === 'h2h'
             ? []
             : market === 'spreads'
               ? altSpreadPoints(game, game.away_team, outcomes.away.point)
               : altTotalPoints(game, outcomes.away.point)}
-        {@const hasAlts = altPts.length > 0}
+        {@const canExpand = market !== 'h2h'}
         {@const isExpanded = expanded.has(game.event_id)}
+        {@const isFetching = fetchingAlt.has(game.event_id)}
+        {@const altLoaded = altByEvent.has(game.event_id)}
 
         <!-- Away row -->
-        <div class="row away" class:expandable={hasAlts}>
+        <div class="row away" class:expandable={canExpand}>
           <div class={`cell time ${time.kind}`}>{time.text}</div>
           <div class="cell team">
-            {#if hasAlts}
+            {#if canExpand}
               <button
                 class="chev"
                 class:open={isExpanded}
                 onclick={() => toggleExpanded(game.event_id)}
-                title={isExpanded ? 'Hide alt lines' : `Show ${altPts.length} alt line${altPts.length === 1 ? '' : 's'}`}
+                title={isExpanded ? 'Hide alt lines' : 'Show alt lines'}
                 aria-expanded={isExpanded}
               >▸</button>
             {/if}
@@ -231,7 +270,16 @@
         </div>
 
         <!-- Alt-line sub-rows (only when this game is expanded) -->
-        {#if isExpanded && altLines && market === 'spreads'}
+        {#if isExpanded && isFetching}
+          <div class="row alt-status">
+            <div class="cell alt-status-cell">Loading alt lines…</div>
+          </div>
+        {:else if isExpanded && altLoaded && altPts.length === 0}
+          <div class="row alt-status">
+            <div class="cell alt-status-cell">No alt lines available for this event.</div>
+          </div>
+        {/if}
+        {#if isExpanded && !isFetching && market === 'spreads'}
           {@const pts = altPts}
           {#each pts as apt}
             {@const hpt = -apt}
@@ -286,7 +334,7 @@
               {/each}
             </div>
           {/each}
-        {:else if isExpanded && altLines && market === 'totals'}
+        {:else if isExpanded && !isFetching && market === 'totals'}
           {@const pts = altPts}
           {#each pts as tpt}
             {@const oAltPrices = allPrices(game, 'Over', 'totals', tpt, dfsBooks)}
@@ -522,6 +570,14 @@
   .row.alt .cell {
     background: rgba(255, 255, 255, 0.015);
     min-height: 20px;
+  }
+  .alt-status-cell {
+    grid-column: 1 / -1;
+    padding: var(--sp-2) var(--sp-3);
+    color: var(--text-dim);
+    font-family: var(--font-sans);
+    font-style: italic;
+    text-align: center;
   }
   .empty {
     grid-column: 1 / -1;

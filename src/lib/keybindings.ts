@@ -26,16 +26,6 @@ export function initKeybindings(): () => void {
       case 's':
         app.toggleSettings();
         break;
-      case 'l': {
-        const next = !app.altLinesEnabled;
-        app.altLinesEnabled = next;
-        try {
-          await api.setAltLines(next);
-        } catch (err) {
-          console.error('[keybindings] setAltLines failed', err);
-        }
-        break;
-      }
       case 'r':
         try {
           await api.forceRefresh(app.currentSport);

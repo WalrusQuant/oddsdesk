@@ -28,7 +28,7 @@ fn specta_builder() -> Builder {
             commands::get_budget,
             commands::get_settings,
             commands::save_settings,
-            commands::set_alt_lines,
+            commands::fetch_alt_lines_for_event,
             commands::force_refresh,
         ])
         .typ::<models::Sport>()
@@ -107,11 +107,47 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(builder.invoke_handler())
         .setup(move |app| {
-            use tauri::Manager;
+            use tauri::{Emitter, Manager};
             builder.mount_events(app);
             let service = build_service(&app.handle())
                 .map_err(|e| format!("failed to init DataService: {e}"))?;
             app.manage(service);
+
+            // Drive CSS shell height from the actual native window size. The
+            // WebView's `100vh` has been observed to report a stale/smaller
+            // viewport on macOS, leaving the status bar floating mid-window.
+            // Emitting the logical inner-size on every resize gives the
+            // frontend a source of truth it can pin the shell to.
+            if let Some(window) = app.get_webview_window("main") {
+                // Initial emit so the shell has a correct height before any
+                // user resize.
+                if let (Ok(size), Ok(scale)) = (window.inner_size(), window.scale_factor()) {
+                    let _ = app.emit(
+                        "window-resized",
+                        serde_json::json!({
+                            "width": size.width as f64 / scale,
+                            "height": size.height as f64 / scale,
+                        }),
+                    );
+                }
+                let handle = app.handle().clone();
+                window.on_window_event(move |event| {
+                    if let tauri::WindowEvent::Resized(physical) = event {
+                        if let Some(w) = handle.get_webview_window("main") {
+                            if let Ok(scale) = w.scale_factor() {
+                                let _ = handle.emit(
+                                    "window-resized",
+                                    serde_json::json!({
+                                        "width": physical.width as f64 / scale,
+                                        "height": physical.height as f64 / scale,
+                                    }),
+                                );
+                            }
+                        }
+                    }
+                });
+            }
+
             Ok(())
         })
         .run(tauri::generate_context!())

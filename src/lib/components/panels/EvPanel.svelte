@@ -43,7 +43,7 @@
       <div class="state empty">no +EV opportunities</div>
     {:else}
       <ul class="list">
-        {#each bets as b (b.event_id + b.book + b.market + b.outcome_name + String(b.outcome_point))}
+        {#each bets as b (b.event_id + b.book + b.market + (b.player_name ?? '') + b.outcome_name + String(b.outcome_point))}
           <li>
             <div class="ev-badge" class:pos={b.ev_percentage > 0}>
               {formatEv(b.ev_percentage)}

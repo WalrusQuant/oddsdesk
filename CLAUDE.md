@@ -178,7 +178,7 @@ src/
 - `stored_ev(sport, is_props)`
 - `get_budget()` / `get_settings()`
 - `save_settings(update)` (api_key is preserved server-side, never sent)
-- `set_alt_lines(enabled)` / `force_refresh(sport)`
+- `fetch_alt_lines_for_event(sport, event_id)` / `force_refresh(sport)`
 
 All three `find_*` commands that deal with EV persist to SQLite and deactivate missing rows. `find_*_arbs` and `find_*_middles` are pure transforms.
 
@@ -189,7 +189,6 @@ Handled by `src/lib/keybindings.ts` (window-level `keydown`, respects `<input>` 
 - `p` games/props toggle
 - `e` / `a` / `m` EV / arb / middles panel
 - `s` settings drawer
-- `l` alt lines (server-synced)
 - `r` force refresh
 - `←` / `→` previous / next sport
 - `1` / `2` / `3` market toggle (games view only)
@@ -214,7 +213,7 @@ Raw API prices are used for **consensus** calculation (Rust `calculate_market_av
 
 ### Alt lines
 
-`alt_lines_enabled` toggles per-event fetches of `alternate_spreads` + `alternate_totals`. Merged into the event's bookmakers in-place. Rust: `DataService::fetch_alt_lines`. Frontend table adds expanded sub-rows per alt point when the setting is on.
+Alt markets (`alternate_spreads` + `alternate_totals`) are fetched **on demand** per event when the user clicks a game's chevron in `GamesTable.svelte`. Rust: `DataService::fetch_alt_lines_for_event(sport, event_id)` — cached per event with the same TTL as `odds_refresh_interval`. Uses `regions_games` (same as base game lines). Alt data is display-only — the EV / arb / middle engine never sees alt markets (signal path calls `fetch_odds` directly, not `get_game_rows`).
 
 ### Parity between Rust engine and TS display
 

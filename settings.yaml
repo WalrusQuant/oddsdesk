@@ -10,60 +10,48 @@ bookmakers:
 - fliff
 - hardrockbet
 - rebet
-- betopenly
 - kalshi
 - novig
 - prophetx
-- betr_us_dfs
-- pick6
 - prizepicks
 - underdog
+- pick6
+- betr_us_dfs
 ev_reference: market_average
 sports:
 - basketball_nba
 - baseball_mlb
 - icehockey_nhl
-odds_refresh_interval: 60
+odds_refresh_interval: 120
 scores_refresh_interval: 60
 ev_threshold: 2.0
 ev_odds_min: -200.0
 ev_odds_max: 200.0
 odds_format: american
-regions:
+regions_games:
 - us
 - us2
 - us_ex
+regions_props:
+- us
+- us2
 - us_dfs
 low_credit_warning: 50
 critical_credit_stop: 10
 props_enabled: true
 props_refresh_interval: 300
 props_max_concurrent: 5
-alt_lines_enabled: true
 arb_enabled: true
 arb_min_profit_pct: 0.1
 middle_enabled: true
 middle_min_window: 0.5
 middle_max_combined_cost: 1.08
 dfs_books:
-  prizepicks: -137.0
   pick6: -137.0
-  betr_us_dfs: -137.0
+  prizepicks: -137.0
   underdog: -137.0
+  betr_us_dfs: -137.0
 props_markets:
-  basketball_nba:
-  - player_points
-  - player_rebounds
-  - player_assists
-  - player_threes
-  - player_points_rebounds_assists
-  americanfootball_nfl:
-  - player_pass_yds
-  - player_pass_tds
-  - player_rush_yds
-  - player_reception_yds
-  - player_receptions
-  - player_anytime_td
   baseball_mlb:
   - batter_home_runs
   - batter_hits
@@ -74,3 +62,16 @@ props_markets:
   - player_goals
   - player_assists
   - player_shots_on_goal
+  americanfootball_nfl:
+  - player_pass_yds
+  - player_pass_tds
+  - player_rush_yds
+  - player_reception_yds
+  - player_receptions
+  - player_anytime_td
+  basketball_nba:
+  - player_points
+  - player_rebounds
+  - player_assists
+  - player_threes
+  - player_points_rebounds_assists

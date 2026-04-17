@@ -31,7 +31,7 @@
   <span class="spacer"></span>
   <span class="slot hints">
     <kbd>p</kbd> view · <kbd>e</kbd>/<kbd>a</kbd>/<kbd>m</kbd> panels ·
-    <kbd>l</kbd> alt · <kbd>r</kbd> refresh · <kbd>s</kbd> settings
+    <kbd>r</kbd> refresh · <kbd>s</kbd> settings
   </span>
 </footer>
 
