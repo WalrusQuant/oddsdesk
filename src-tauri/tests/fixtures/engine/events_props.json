@@ -1,0 +1,220 @@
+[
+  {
+    "away_team": "Celtics",
+    "bookmakers": [
+      {
+        "key": "fanduel",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "player_points",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": "LeBron James",
+                "name": "Over",
+                "point": 25.5,
+                "price": -110.0
+              },
+              {
+                "description": "LeBron James",
+                "name": "Under",
+                "point": 25.5,
+                "price": -110.0
+              }
+            ]
+          }
+        ],
+        "title": "FanDuel"
+      },
+      {
+        "key": "draftkings",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "player_points",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": "LeBron James",
+                "name": "Over",
+                "point": 25.5,
+                "price": -108.0
+              },
+              {
+                "description": "LeBron James",
+                "name": "Under",
+                "point": 25.5,
+                "price": -112.0
+              }
+            ]
+          }
+        ],
+        "title": "DraftKings"
+      },
+      {
+        "key": "betmgm",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "player_points",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": "LeBron James",
+                "name": "Over",
+                "point": 25.5,
+                "price": -105.0
+              },
+              {
+                "description": "LeBron James",
+                "name": "Under",
+                "point": 25.5,
+                "price": -115.0
+              }
+            ]
+          }
+        ],
+        "title": "BetMGM"
+      },
+      {
+        "key": "betrivers",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "player_points",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": "LeBron James",
+                "name": "Over",
+                "point": 25.5,
+                "price": -112.0
+              },
+              {
+                "description": "LeBron James",
+                "name": "Under",
+                "point": 25.5,
+                "price": -108.0
+              }
+            ]
+          }
+        ],
+        "title": "BetRivers"
+      }
+    ],
+    "commence_time": "2026-03-01T19:00:00Z",
+    "home_team": "Lakers",
+    "id": "prop1",
+    "sport_key": "basketball_nba",
+    "sport_title": "NBA"
+  },
+  {
+    "away_team": "Celtics",
+    "bookmakers": [
+      {
+        "key": "book_a",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "player_points",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": "Stephen Curry",
+                "name": "Over",
+                "point": 25.5,
+                "price": 200.0
+              },
+              {
+                "description": "Stephen Curry",
+                "name": "Under",
+                "point": 25.5,
+                "price": -300.0
+              }
+            ]
+          }
+        ],
+        "title": "Book A"
+      },
+      {
+        "key": "book_b",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "player_points",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": "Stephen Curry",
+                "name": "Over",
+                "point": 25.5,
+                "price": -300.0
+              },
+              {
+                "description": "Stephen Curry",
+                "name": "Under",
+                "point": 25.5,
+                "price": 200.0
+              }
+            ]
+          }
+        ],
+        "title": "Book B"
+      }
+    ],
+    "commence_time": "2026-03-01T19:00:00Z",
+    "home_team": "Lakers",
+    "id": "prop_arb1",
+    "sport_key": "basketball_nba",
+    "sport_title": "NBA"
+  },
+  {
+    "away_team": "Celtics",
+    "bookmakers": [
+      {
+        "key": "book_a",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "player_points",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": "Jayson Tatum",
+                "name": "Over",
+                "point": 22.5,
+                "price": -110.0
+              }
+            ]
+          }
+        ],
+        "title": "Book A"
+      },
+      {
+        "key": "book_b",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "player_points",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": "Jayson Tatum",
+                "name": "Under",
+                "point": 24.5,
+                "price": -110.0
+              }
+            ]
+          }
+        ],
+        "title": "Book B"
+      }
+    ],
+    "commence_time": "2026-03-01T19:00:00Z",
+    "home_team": "Lakers",
+    "id": "prop_mid1",
+    "sport_key": "basketball_nba",
+    "sport_title": "NBA"
+  }
+]

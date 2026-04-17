@@ -1,0 +1,27 @@
+[
+  {
+    "away_team": "Celtics",
+    "book_a": "book_a",
+    "book_a_title": "Book A",
+    "book_b": "book_b",
+    "book_b_title": "Book B",
+    "combined_cost": 1.0476190476190477,
+    "ev_percentage": 2.136363636363641,
+    "event_id": "prop_mid1",
+    "hit_prob": 0.07,
+    "home_team": "Lakers",
+    "is_prop": true,
+    "line_a": 22.5,
+    "line_b": 24.5,
+    "market": "player_points",
+    "middle_high": 24.5,
+    "middle_low": 22.5,
+    "odds_a": -110.0,
+    "odds_b": -110.0,
+    "outcome_a": "Over",
+    "outcome_b": "Under",
+    "player_name": "Jayson Tatum",
+    "sport_key": "basketball_nba",
+    "window_size": 2.0
+  }
+]

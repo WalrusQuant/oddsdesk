@@ -1,0 +1,496 @@
+[
+  {
+    "away_team": "Celtics",
+    "bookmakers": [
+      {
+        "key": "fanduel",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Lakers",
+                "point": null,
+                "price": -150.0
+              },
+              {
+                "description": null,
+                "name": "Celtics",
+                "point": null,
+                "price": 130.0
+              }
+            ]
+          },
+          {
+            "key": "spreads",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Lakers",
+                "point": -3.5,
+                "price": -110.0
+              },
+              {
+                "description": null,
+                "name": "Celtics",
+                "point": 3.5,
+                "price": -110.0
+              }
+            ]
+          },
+          {
+            "key": "totals",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Over",
+                "point": 220.5,
+                "price": -110.0
+              },
+              {
+                "description": null,
+                "name": "Under",
+                "point": 220.5,
+                "price": -110.0
+              }
+            ]
+          }
+        ],
+        "title": "FanDuel"
+      },
+      {
+        "key": "draftkings",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Lakers",
+                "point": null,
+                "price": -145.0
+              },
+              {
+                "description": null,
+                "name": "Celtics",
+                "point": null,
+                "price": 125.0
+              }
+            ]
+          },
+          {
+            "key": "spreads",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Lakers",
+                "point": -3.5,
+                "price": -108.0
+              },
+              {
+                "description": null,
+                "name": "Celtics",
+                "point": 3.5,
+                "price": -112.0
+              }
+            ]
+          },
+          {
+            "key": "totals",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Over",
+                "point": 220.5,
+                "price": -108.0
+              },
+              {
+                "description": null,
+                "name": "Under",
+                "point": 220.5,
+                "price": -112.0
+              }
+            ]
+          }
+        ],
+        "title": "DraftKings"
+      },
+      {
+        "key": "betmgm",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Lakers",
+                "point": null,
+                "price": -155.0
+              },
+              {
+                "description": null,
+                "name": "Celtics",
+                "point": null,
+                "price": 135.0
+              }
+            ]
+          },
+          {
+            "key": "spreads",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Lakers",
+                "point": -3.5,
+                "price": -112.0
+              },
+              {
+                "description": null,
+                "name": "Celtics",
+                "point": 3.5,
+                "price": -108.0
+              }
+            ]
+          },
+          {
+            "key": "totals",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Over",
+                "point": 220.5,
+                "price": -112.0
+              },
+              {
+                "description": null,
+                "name": "Under",
+                "point": 220.5,
+                "price": -108.0
+              }
+            ]
+          }
+        ],
+        "title": "BetMGM"
+      },
+      {
+        "key": "betrivers",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Lakers",
+                "point": null,
+                "price": -148.0
+              },
+              {
+                "description": null,
+                "name": "Celtics",
+                "point": null,
+                "price": 128.0
+              }
+            ]
+          },
+          {
+            "key": "spreads",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Lakers",
+                "point": -3.5,
+                "price": -110.0
+              },
+              {
+                "description": null,
+                "name": "Celtics",
+                "point": 3.5,
+                "price": -110.0
+              }
+            ]
+          },
+          {
+            "key": "totals",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Over",
+                "point": 220.5,
+                "price": -105.0
+              },
+              {
+                "description": null,
+                "name": "Under",
+                "point": 220.5,
+                "price": -115.0
+              }
+            ]
+          }
+        ],
+        "title": "BetRivers"
+      }
+    ],
+    "commence_time": "2026-03-01T19:00:00Z",
+    "home_team": "Lakers",
+    "id": "event1",
+    "sport_key": "basketball_nba",
+    "sport_title": "NBA"
+  },
+  {
+    "away_team": "Pistons",
+    "bookmakers": [
+      {
+        "key": "book_a",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Bulls",
+                "point": null,
+                "price": 200.0
+              },
+              {
+                "description": null,
+                "name": "Pistons",
+                "point": null,
+                "price": -300.0
+              }
+            ]
+          }
+        ],
+        "title": "Book A"
+      },
+      {
+        "key": "book_b",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Bulls",
+                "point": null,
+                "price": -300.0
+              },
+              {
+                "description": null,
+                "name": "Pistons",
+                "point": null,
+                "price": 200.0
+              }
+            ]
+          }
+        ],
+        "title": "Book B"
+      }
+    ],
+    "commence_time": "2026-03-01T19:00:00Z",
+    "home_team": "Bulls",
+    "id": "arb1",
+    "sport_key": "basketball_nba",
+    "sport_title": "NBA"
+  },
+  {
+    "away_team": "Knicks",
+    "bookmakers": [
+      {
+        "key": "book_a",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "totals",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Over",
+                "point": 220.5,
+                "price": 200.0
+              },
+              {
+                "description": null,
+                "name": "Under",
+                "point": 220.5,
+                "price": -300.0
+              }
+            ]
+          }
+        ],
+        "title": "Book A"
+      },
+      {
+        "key": "book_b",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "totals",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Over",
+                "point": 220.5,
+                "price": -300.0
+              },
+              {
+                "description": null,
+                "name": "Under",
+                "point": 220.5,
+                "price": 200.0
+              }
+            ]
+          }
+        ],
+        "title": "Book B"
+      }
+    ],
+    "commence_time": "2026-03-01T19:00:00Z",
+    "home_team": "Heat",
+    "id": "sameline1",
+    "sport_key": "basketball_nba",
+    "sport_title": "NBA"
+  },
+  {
+    "away_team": "Nuggets",
+    "bookmakers": [
+      {
+        "key": "book_a",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "spreads",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Warriors",
+                "point": -3.0,
+                "price": -110.0
+              },
+              {
+                "description": null,
+                "name": "Nuggets",
+                "point": 3.0,
+                "price": -110.0
+              }
+            ]
+          }
+        ],
+        "title": "Book A"
+      },
+      {
+        "key": "book_b",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "spreads",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Warriors",
+                "point": -4.5,
+                "price": -110.0
+              },
+              {
+                "description": null,
+                "name": "Nuggets",
+                "point": 4.5,
+                "price": -110.0
+              }
+            ]
+          }
+        ],
+        "title": "Book B"
+      }
+    ],
+    "commence_time": "2026-03-01T19:00:00Z",
+    "home_team": "Warriors",
+    "id": "mid1",
+    "sport_key": "basketball_nba",
+    "sport_title": "NBA"
+  },
+  {
+    "away_team": "Mavericks",
+    "bookmakers": [
+      {
+        "key": "book_a",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "totals",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Over",
+                "point": 220.5,
+                "price": -110.0
+              },
+              {
+                "description": null,
+                "name": "Under",
+                "point": 220.5,
+                "price": -110.0
+              }
+            ]
+          }
+        ],
+        "title": "Book A"
+      },
+      {
+        "key": "book_b",
+        "last_update": null,
+        "markets": [
+          {
+            "key": "totals",
+            "last_update": null,
+            "outcomes": [
+              {
+                "description": null,
+                "name": "Over",
+                "point": 222.5,
+                "price": -110.0
+              },
+              {
+                "description": null,
+                "name": "Under",
+                "point": 222.5,
+                "price": -110.0
+              }
+            ]
+          }
+        ],
+        "title": "Book B"
+      }
+    ],
+    "commence_time": "2026-03-01T19:00:00Z",
+    "home_team": "Suns",
+    "id": "mid2",
+    "sport_key": "basketball_nba",
+    "sport_title": "NBA"
+  }
+]
