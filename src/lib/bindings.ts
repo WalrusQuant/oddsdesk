@@ -22,6 +22,7 @@ async greet(name: string) : Promise<string> {
 
 export type ArbBet = { sport_key: string; event_id: string; home_team: string; away_team: string; market: string; book_a: string; book_a_title: string; outcome_a: string; odds_a: number; point_a?: number | null; book_b: string; book_b_title: string; outcome_b: string; odds_b: number; point_b?: number | null; profit_pct: number; implied_sum: number; player_name?: string | null; is_prop?: boolean }
 export type Bookmaker = { key: string; title: string; last_update?: string | null; markets?: Market[] }
+export type BudgetState = { remaining: number | null; used: number | null; is_low: boolean; is_critical: boolean; status_text: string; warning_text: string }
 export type EVBet = { sport_key: string; book: string; book_title: string; event_id: string; home_team: string; away_team: string; market: string; outcome_name: string; outcome_point?: number | null; odds: number; decimal_odds: number; implied_prob: number; no_vig_prob: number; fair_odds: number; ev_percentage: number; edge: number; detected_at?: string | null; num_books?: number; player_name?: string | null; is_prop?: boolean }
 export type Event = { id: string; sport_key: string; sport_title?: string; commence_time: string; home_team: string; away_team: string; bookmakers?: Bookmaker[] }
 export type GameRow = { event_id: string; sport_key: string; home_team: string; away_team: string; commence_time: string; home_score?: string; away_score?: string; completed?: boolean; bookmakers?: Bookmaker[] }
@@ -33,6 +34,7 @@ export type Score = { id: string; sport_key: string; sport_title?: string; comme
 export type ScoreValue = { name: string; score?: string | null }
 export type Settings = { bookmakers?: string[]; ev_reference?: string; sports?: string[]; odds_refresh_interval?: number; scores_refresh_interval?: number; ev_threshold?: number; ev_odds_min?: number; ev_odds_max?: number; odds_format?: string; regions?: string[]; low_credit_warning?: number; critical_credit_stop?: number; props_enabled?: boolean; props_refresh_interval?: number; props_max_concurrent?: number; alt_lines_enabled?: boolean; arb_enabled?: boolean; arb_min_profit_pct?: number; middle_enabled?: boolean; middle_min_window?: number; middle_max_combined_cost?: number; dfs_books?: Partial<{ [key in string]: number }>; props_markets?: Partial<{ [key in string]: string[] }> }
 export type Sport = { key: string; group: string; title: string; description?: string; active?: boolean; has_outrights?: boolean }
+export type StoredEVBet = { id: number; sport_key: string; book: string; book_title: string; event_id: string; home_team: string; away_team: string; market: string; outcome_name: string; outcome_point: number | null; odds: number; fair_odds: number; no_vig_prob: number; ev_percentage: number; edge: number; num_books: number; detected_at: string; last_seen_at: string; is_active: boolean; player_name: string | null; is_prop: boolean; minutes_active: number }
 
 /** tauri-specta globals **/
 

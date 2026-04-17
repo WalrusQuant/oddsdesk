@@ -233,3 +233,39 @@ pub struct MiddleBet {
     #[serde(default)]
     pub is_prop: bool,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct StoredEVBet {
+    pub id: i64,
+    pub sport_key: String,
+    pub book: String,
+    pub book_title: String,
+    pub event_id: String,
+    pub home_team: String,
+    pub away_team: String,
+    pub market: String,
+    pub outcome_name: String,
+    pub outcome_point: Option<f64>,
+    pub odds: f64,
+    pub fair_odds: f64,
+    pub no_vig_prob: f64,
+    pub ev_percentage: f64,
+    pub edge: f64,
+    pub num_books: u32,
+    pub detected_at: DateTime<Utc>,
+    pub last_seen_at: DateTime<Utc>,
+    pub is_active: bool,
+    pub player_name: Option<String>,
+    pub is_prop: bool,
+    pub minutes_active: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct BudgetState {
+    pub remaining: Option<u32>,
+    pub used: Option<u32>,
+    pub is_low: bool,
+    pub is_critical: bool,
+    pub status_text: String,
+    pub warning_text: String,
+}

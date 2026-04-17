@@ -3,6 +3,7 @@ pub mod config;
 pub mod engine;
 pub mod errors;
 pub mod models;
+pub mod store;
 
 use tauri_specta::{collect_commands, Builder};
 
@@ -27,6 +28,8 @@ fn specta_builder() -> Builder {
         .typ::<models::EVBet>()
         .typ::<models::ArbBet>()
         .typ::<models::MiddleBet>()
+        .typ::<models::StoredEVBet>()
+        .typ::<models::BudgetState>()
         .typ::<config::Settings>()
 }
 
