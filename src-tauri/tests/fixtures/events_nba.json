@@ -1,0 +1,26 @@
+[
+  {
+    "id": "event-nba-001",
+    "sport_key": "basketball_nba",
+    "sport_title": "NBA",
+    "commence_time": "2026-03-01T19:00:00Z",
+    "home_team": "Lakers",
+    "away_team": "Celtics"
+  },
+  {
+    "id": "event-nba-002",
+    "sport_key": "basketball_nba",
+    "sport_title": "NBA",
+    "commence_time": "2026-03-01T22:00:00Z",
+    "home_team": "Warriors",
+    "away_team": "Nuggets"
+  },
+  {
+    "id": "event-nba-003",
+    "sport_key": "basketball_nba",
+    "sport_title": "NBA",
+    "commence_time": "2026-03-02T00:00:00Z",
+    "home_team": "Heat",
+    "away_team": "Knicks"
+  }
+]

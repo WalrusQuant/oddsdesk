@@ -1,6 +1,7 @@
-mod config;
-mod errors;
-mod models;
+pub mod api;
+pub mod config;
+pub mod errors;
+pub mod models;
 
 use tauri_specta::{collect_commands, Builder};
 

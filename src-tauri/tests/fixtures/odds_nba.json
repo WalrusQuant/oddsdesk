@@ -1,0 +1,120 @@
+[
+  {
+    "id": "event-nba-001",
+    "sport_key": "basketball_nba",
+    "sport_title": "NBA",
+    "commence_time": "2026-03-01T19:00:00Z",
+    "home_team": "Lakers",
+    "away_team": "Celtics",
+    "bookmakers": [
+      {
+        "key": "fanduel",
+        "title": "FanDuel",
+        "last_update": "2026-03-01T18:00:00Z",
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": "2026-03-01T18:00:00Z",
+            "outcomes": [
+              { "name": "Lakers", "price": -150 },
+              { "name": "Celtics", "price": 130 }
+            ]
+          },
+          {
+            "key": "spreads",
+            "last_update": "2026-03-01T18:00:00Z",
+            "outcomes": [
+              { "name": "Lakers", "price": -110, "point": -3.5 },
+              { "name": "Celtics", "price": -110, "point": 3.5 }
+            ]
+          },
+          {
+            "key": "totals",
+            "last_update": "2026-03-01T18:00:00Z",
+            "outcomes": [
+              { "name": "Over", "price": -110, "point": 220.5 },
+              { "name": "Under", "price": -110, "point": 220.5 }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "draftkings",
+        "title": "DraftKings",
+        "last_update": "2026-03-01T18:00:00Z",
+        "markets": [
+          {
+            "key": "h2h",
+            "outcomes": [
+              { "name": "Lakers", "price": -145 },
+              { "name": "Celtics", "price": 125 }
+            ]
+          },
+          {
+            "key": "spreads",
+            "outcomes": [
+              { "name": "Lakers", "price": -108, "point": -3.5 },
+              { "name": "Celtics", "price": -112, "point": 3.5 }
+            ]
+          },
+          {
+            "key": "totals",
+            "outcomes": [
+              { "name": "Over", "price": -108, "point": 220.5 },
+              { "name": "Under", "price": -112, "point": 220.5 }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "betmgm",
+        "title": "BetMGM",
+        "markets": [
+          {
+            "key": "h2h",
+            "outcomes": [
+              { "name": "Lakers", "price": -155 },
+              { "name": "Celtics", "price": 135 }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "betrivers",
+        "title": "BetRivers",
+        "markets": [
+          {
+            "key": "h2h",
+            "outcomes": [
+              { "name": "Lakers", "price": -148 },
+              { "name": "Celtics", "price": 128 }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "event-nba-002",
+    "sport_key": "basketball_nba",
+    "sport_title": "NBA",
+    "commence_time": "2026-03-01T22:00:00Z",
+    "home_team": "Warriors",
+    "away_team": "Nuggets",
+    "bookmakers": [
+      {
+        "key": "fanduel",
+        "title": "FanDuel",
+        "markets": [
+          {
+            "key": "h2h",
+            "outcomes": [
+              { "name": "Warriors", "price": 120 },
+              { "name": "Nuggets", "price": -140 }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

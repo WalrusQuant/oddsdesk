@@ -1,0 +1,34 @@
+[
+  {
+    "key": "americanfootball_nfl",
+    "group": "American Football",
+    "title": "NFL",
+    "description": "US Football",
+    "active": true,
+    "has_outrights": false
+  },
+  {
+    "key": "basketball_nba",
+    "group": "Basketball",
+    "title": "NBA",
+    "description": "US Basketball",
+    "active": true,
+    "has_outrights": false
+  },
+  {
+    "key": "baseball_mlb",
+    "group": "Baseball",
+    "title": "MLB",
+    "description": "Major League Baseball",
+    "active": true,
+    "has_outrights": false
+  },
+  {
+    "key": "icehockey_nhl",
+    "group": "Ice Hockey",
+    "title": "NHL",
+    "description": "US Ice Hockey",
+    "active": true,
+    "has_outrights": false
+  }
+]
