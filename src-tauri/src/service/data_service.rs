@@ -78,10 +78,14 @@ impl DataService {
     }
 
     /// Test constructor: injects a pre-built client + in-memory store.
+    /// Uses a per-process temp dir as project root so tests that call
+    /// `save_settings` don't write into the real repo.
     pub fn for_test(settings: Settings, client: OddsApiClient, ev_store: EvStore) -> Self {
         let budget =
             BudgetTracker::new(settings.low_credit_warning, settings.critical_credit_stop);
-        Self::from_parts(settings, PathBuf::from("."), client, budget, ev_store)
+        let root = std::env::temp_dir().join(format!("oddsdesk-test-{}", std::process::id()));
+        let _ = std::fs::create_dir_all(&root);
+        Self::from_parts(settings, root, client, budget, ev_store)
     }
 
     fn from_parts(
