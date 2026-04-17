@@ -9,6 +9,7 @@ export function initKeybindings(): () => void {
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
     if (e.metaKey || e.ctrlKey || e.altKey) return;
 
+    let handled = true;
     switch (e.key) {
       case 'p':
         app.toggleView();
@@ -50,37 +51,37 @@ export function initKeybindings(): () => void {
         break;
       case '1':
         if (app.viewMode === 'games') app.setGamesMarket('h2h');
+        else handled = false;
         break;
       case '2':
         if (app.viewMode === 'games') app.setGamesMarket('spreads');
+        else handled = false;
         break;
       case '3':
         if (app.viewMode === 'games') app.setGamesMarket('totals');
+        else handled = false;
         break;
       case 'f':
         if (app.viewMode === 'games') app.cycleGameFilter();
+        else handled = false;
         break;
       case 't':
         if (app.viewMode === 'props') {
           const markets = Array.from(new Set(data.props.map((r) => r.market_key))).sort();
           app.cyclePropsMarket(markets);
-        }
+        } else handled = false;
         break;
       case '/':
         if (app.viewMode === 'props') {
           const search = document.querySelector<HTMLInputElement>('#props-search');
           search?.focus();
           search?.select();
-          e.preventDefault();
-        }
+        } else handled = false;
         break;
       default:
-        return;
+        handled = false;
     }
-    if (!['/', '1', '2', '3'].includes(e.key) || app.viewMode !== 'games') {
-      // Avoid stealing numeric keys when they'd be typed elsewhere.
-      e.preventDefault();
-    }
+    if (handled) e.preventDefault();
   };
 
   window.addEventListener('keydown', onKey);

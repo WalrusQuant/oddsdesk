@@ -7,7 +7,9 @@
   }
 
   let visible = $state<ToastItem[]>([]);
-  let seen = $state(0);
+  // Non-reactive on purpose: reading and writing $state inside the same
+  // $effect risks a re-entry loop; plain let sidesteps reactive tracking.
+  let seen = 0;
   let nextId = 0;
 
   $effect(() => {

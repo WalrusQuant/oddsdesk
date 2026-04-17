@@ -6,8 +6,15 @@
   const credits = $derived(budget.current?.status_text ?? 'Credits: --');
   const warning = $derived(budget.current?.warning_text ?? '');
   const lastRefresh = $derived(data.lastRefresh);
+
+  // Tick every 5s so "Xs ago" updates between polls (Date.now() isn't reactive).
+  let now = $state(Date.now());
+  $effect(() => {
+    const id = setInterval(() => (now = Date.now()), 5000);
+    return () => clearInterval(id);
+  });
   const lastRefreshText = $derived(
-    lastRefresh ? `${Math.round((Date.now() - lastRefresh) / 1000)}s ago` : 'never',
+    lastRefresh ? `${Math.round((now - lastRefresh) / 1000)}s ago` : 'never',
   );
   const modeText = $derived(`${app.viewMode === 'games' ? 'Games' : 'Props'} · ${app.currentSport}`);
 </script>

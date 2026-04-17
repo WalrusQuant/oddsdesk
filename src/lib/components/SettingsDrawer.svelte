@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { app } from '$lib/stores/app.svelte';
   import { settings } from '$lib/stores/settings.svelte';
   import { api } from '$lib/ipc';
@@ -60,7 +61,10 @@
     };
   }
 
-  $effect(() => {
+  // Snapshot once on mount so external settings updates during an open
+  // drawer can't clobber in-progress edits. The drawer is conditionally
+  // rendered, so it remounts (and re-snapshots) each time it opens.
+  onMount(() => {
     if (settings.current) {
       form = {
         ...defaultForm(),
