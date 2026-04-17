@@ -82,7 +82,9 @@ fn find_game_ev(
     now: chrono::DateTime<Utc>,
     opts: &EvOptions<'_>,
 ) {
-    for market_key in discover_market_keys(event) {
+    let mut market_keys: Vec<String> = discover_market_keys(event).into_iter().collect();
+    market_keys.sort();
+    for market_key in market_keys {
         let mut book_outcomes: HashMap<String, Vec<(&Bookmaker, &OutcomeOdds)>> = HashMap::new();
         for bm in &event.bookmakers {
             let Some(outcomes) = market_outcomes(bm, &market_key) else {
@@ -113,12 +115,14 @@ fn find_prop_ev(
     now: chrono::DateTime<Utc>,
     opts: &EvOptions<'_>,
 ) {
-    let mut market_keys: HashSet<String> = HashSet::new();
+    let mut market_key_set: HashSet<String> = HashSet::new();
     for bm in &event.bookmakers {
         for m in &bm.markets {
-            market_keys.insert(m.key.clone());
+            market_key_set.insert(m.key.clone());
         }
     }
+    let mut market_keys: Vec<String> = market_key_set.into_iter().collect();
+    market_keys.sort();
 
     for market_key in market_keys {
         // pair_key -> outcome_key -> entries

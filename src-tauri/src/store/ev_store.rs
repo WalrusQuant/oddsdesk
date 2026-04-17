@@ -31,6 +31,10 @@ CREATE TABLE IF NOT EXISTS ev_bets (
     is_prop INTEGER NOT NULL DEFAULT 0,
     UNIQUE(book, event_id, market, outcome_name, outcome_point_str, player_name)
 );
+CREATE INDEX IF NOT EXISTS idx_ev_active
+    ON ev_bets(sport_key, is_active, is_prop);
+CREATE INDEX IF NOT EXISTS idx_ev_event
+    ON ev_bets(event_id);
 ";
 
 #[derive(Clone)]
@@ -343,9 +347,13 @@ fn map_stored_row(row: &Row) -> rusqlite::Result<StoredEVBet> {
 }
 
 fn parse_ts(s: &str) -> DateTime<Utc> {
-    DateTime::parse_from_rfc3339(s)
-        .map(|dt| dt.with_timezone(&Utc))
-        .unwrap_or_else(|_| Utc::now())
+    match DateTime::parse_from_rfc3339(s) {
+        Ok(dt) => dt.with_timezone(&Utc),
+        Err(e) => {
+            tracing::warn!(value = %s, error = %e, "ev_store: invalid RFC-3339 timestamp, falling back to now");
+            Utc::now()
+        }
+    }
 }
 
 fn sqlerr(e: rusqlite::Error) -> AppError {

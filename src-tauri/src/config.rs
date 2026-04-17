@@ -200,7 +200,7 @@ pub fn load_settings(project_root: &Path) -> AppResult<Settings> {
     let yaml_path = project_root.join("settings.yaml");
     let mut value: serde_yaml::Value = if yaml_path.exists() {
         let text = std::fs::read_to_string(&yaml_path)?;
-        serde_yaml::from_str(&text).unwrap_or(serde_yaml::Value::Mapping(Default::default()))
+        serde_yaml::from_str(&text)?
     } else {
         serde_yaml::Value::Mapping(Default::default())
     };

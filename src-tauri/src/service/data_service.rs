@@ -475,13 +475,18 @@ impl DataService {
         let bets = find_ev_bets(&pre_game, opts);
 
         if !bets.is_empty() {
-            let _ = self.inner.ev_store.upsert_bets(bets.clone()).await;
+            if let Err(e) = self.inner.ev_store.upsert_bets(bets.clone()).await {
+                tracing::warn!(sport = %sport, error = %e, "ev_store upsert_bets failed");
+            }
         }
-        let _ = self
+        if let Err(e) = self
             .inner
             .ev_store
             .deactivate_missing(sport.to_string(), bets.clone(), false)
-            .await;
+            .await
+        {
+            tracing::warn!(sport = %sport, error = %e, "ev_store deactivate_missing failed");
+        }
 
         bets
     }
@@ -499,13 +504,18 @@ impl DataService {
         let bets = find_ev_bets(&events, opts);
 
         if !bets.is_empty() {
-            let _ = self.inner.ev_store.upsert_bets(bets.clone()).await;
+            if let Err(e) = self.inner.ev_store.upsert_bets(bets.clone()).await {
+                tracing::warn!(sport = %sport, error = %e, "ev_store upsert_bets (props) failed");
+            }
         }
-        let _ = self
+        if let Err(e) = self
             .inner
             .ev_store
             .deactivate_missing(sport.to_string(), bets.clone(), true)
-            .await;
+            .await
+        {
+            tracing::warn!(sport = %sport, error = %e, "ev_store deactivate_missing (props) failed");
+        }
 
         bets
     }
