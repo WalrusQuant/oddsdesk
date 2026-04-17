@@ -22,6 +22,17 @@
   const market = $derived(app.gamesMarket);
   const filter = $derived(app.gameFilter);
 
+  // Per-game alt-line expansion. Decoupled from app.altLinesEnabled:
+  // that flag controls whether alt data is fetched; this controls
+  // whether an individual game's alts are rendered. Collapsed by
+  // default so enabling alt lines doesn't crowd the whole table.
+  let expanded = $state<Set<string>>(new Set());
+
+  function toggleExpanded(id: string) {
+    if (expanded.has(id)) expanded.delete(id);
+    else expanded.add(id);
+  }
+
   function filterGames(games: GameRow[], f: typeof filter): GameRow[] {
     switch (f) {
       case 'UPCOMING':
@@ -133,11 +144,30 @@
         {@const hEv = computeInlineEv(hPrices, aPrices)}
         {@const aBest = bestPriceWithBook(game, outcomes.away.name, market, outcomes.away.point, dfsBooks)}
         {@const hBest = bestPriceWithBook(game, outcomes.home.name, market, outcomes.home.point, dfsBooks)}
+        {@const altPts =
+          !altLines || market === 'h2h'
+            ? []
+            : market === 'spreads'
+              ? altSpreadPoints(game, game.away_team, outcomes.away.point)
+              : altTotalPoints(game, outcomes.away.point)}
+        {@const hasAlts = altPts.length > 0}
+        {@const isExpanded = expanded.has(game.event_id)}
 
         <!-- Away row -->
-        <div class="row away">
+        <div class="row away" class:expandable={hasAlts}>
           <div class={`cell time ${time.kind}`}>{time.text}</div>
-          <div class="cell team">{truncate(game.away_team, 22)}</div>
+          <div class="cell team">
+            {#if hasAlts}
+              <button
+                class="chev"
+                class:open={isExpanded}
+                onclick={() => toggleExpanded(game.event_id)}
+                title={isExpanded ? 'Hide alt lines' : `Show ${altPts.length} alt line${altPts.length === 1 ? '' : 's'}`}
+                aria-expanded={isExpanded}
+              >▸</button>
+            {/if}
+            {truncate(game.away_team, 22)}
+          </div>
           <div class="cell score">{game.away_score}</div>
           {#if market === 'spreads'}
             <div class="cell line">{spreadLabel(outcomes.away.point)}</div>
@@ -200,9 +230,9 @@
           {/each}
         </div>
 
-        <!-- Alt-line sub-rows -->
-        {#if altLines && market === 'spreads'}
-          {@const pts = altSpreadPoints(game, game.away_team, outcomes.away.point)}
+        <!-- Alt-line sub-rows (only when this game is expanded) -->
+        {#if isExpanded && altLines && market === 'spreads'}
+          {@const pts = altPts}
           {#each pts as apt}
             {@const hpt = -apt}
             {@const aAltPrices = allPrices(game, game.away_team, 'spreads', apt, dfsBooks)}
@@ -256,8 +286,8 @@
               {/each}
             </div>
           {/each}
-        {:else if altLines && market === 'totals'}
-          {@const pts = altTotalPoints(game, outcomes.away.point)}
+        {:else if isExpanded && altLines && market === 'totals'}
+          {@const pts = altPts}
           {#each pts as tpt}
             {@const oAltPrices = allPrices(game, 'Over', 'totals', tpt, dfsBooks)}
             {@const uAltPrices = allPrices(game, 'Under', 'totals', tpt, dfsBooks)}
@@ -416,6 +446,27 @@
   }
   .row.away .cell.team {
     font-weight: 600;
+  }
+  .chev {
+    display: inline-block;
+    width: 14px;
+    margin-right: 4px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 10px;
+    cursor: pointer;
+    transition: transform 0.12s ease;
+    transform: rotate(0deg);
+    vertical-align: baseline;
+  }
+  .chev:hover {
+    color: var(--accent);
+  }
+  .chev.open {
+    transform: rotate(90deg);
+    color: var(--accent);
   }
   .cell.score {
     color: var(--text);
