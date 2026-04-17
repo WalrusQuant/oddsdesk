@@ -46,8 +46,17 @@ Not shipped yet. Build from source instructions below.
 ## First-time setup
 
 OddsDesk needs an API key from [The Odds API](https://the-odds-api.com/).
-The free tier gives 500 credits/month (enough to try it out); the $30/month
-plan (20,000 credits) is the comfortable floor for regular use.
+
+> ⚠️ **The free plan (500 credits/month) will not work.** The Odds API
+> bills `markets × regions` per `/odds` call and per event on
+> `/events/{id}/odds` (used for props). A polling tool like this —
+> watching multiple sports, books across several regions, and refreshing
+> every minute or two — burns through hundreds of credits per hour even
+> on a conservative config. The **$30/month (20k credits)** tier is the
+> practical floor for main-lines only; if you want player props enabled
+> or a wide region list, you'll need one of the higher paid tiers. Tune
+> `regions_games`, `regions_props`, `odds_refresh_interval`, and
+> `props_markets` in `settings.yaml` to control burn rate.
 
 1. Sign up at the-odds-api.com and copy your API key.
 2. Launch OddsDesk once to let it create its config directory, then edit
