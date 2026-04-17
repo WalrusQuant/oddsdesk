@@ -7,7 +7,7 @@ Built with [Tauri 2](https://v2.tauri.app/), [Svelte 5](https://svelte.dev/),
 and Rust. Ported from the original Python Textual TUI (preserved under
 `python-legacy/` as a reference implementation).
 
-![OddsDesk](assets/odds-table.png)
+![OddsDesk — games view](assets/oddsmain.png)
 
 ---
 
@@ -95,6 +95,18 @@ plan (20,000 credits) is the comfortable floor for regular use.
 - **API credit management** — tracks remaining credits from response headers,
   warns at configurable thresholds, pauses fetching when critical.
 - **Configurable** — in-app settings drawer persists to `settings.yaml`.
+
+### Player props
+
+![Player props view](assets/oddsprop.png)
+
+### Settings
+
+Press `s` to open the Settings drawer. Every key from `settings.yaml` is
+editable live (except the API key, which is managed via `.env`).
+
+![Settings — sports, books, EV thresholds, refresh intervals](assets/settings.png)
+![Settings — arbs, middles, DFS overrides, credits, odds format](assets/settingstwo.png)
 
 ---
 
