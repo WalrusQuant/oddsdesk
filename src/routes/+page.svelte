@@ -1,4 +1,15 @@
 <script lang="ts">
+  import type { Sport } from '$lib/bindings';
+
+  const exampleSport: Sport = {
+    key: 'basketball_nba',
+    group: 'Basketball',
+    title: 'NBA',
+    description: '',
+    active: true,
+    has_outrights: false,
+  };
+
   let ticks = $state(0);
   let now = $derived(new Date().toLocaleTimeString());
 
@@ -10,7 +21,7 @@
 <main class="shell">
   <header>
     <h1>OddsDesk</h1>
-    <span class="tag">Phase 0 scaffold</span>
+    <span class="tag">Phase 1 models</span>
   </header>
 
   <section class="status">
@@ -19,7 +30,9 @@
     <button onclick={bump}>+1</button>
   </section>
 
-  <p class="hint">Tauri v2 + SvelteKit (SPA) + Svelte 5 runes. Ready for Phase 1.</p>
+  <p class="hint">
+    Typed Rust ↔ TS: <code>{exampleSport.title}</code> ({exampleSport.key})
+  </p>
 </main>
 
 <style>
