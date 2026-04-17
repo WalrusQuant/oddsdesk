@@ -85,6 +85,7 @@
     background: var(--bg);
     display: flex;
     flex-direction: column;
+    flex: 1;
     min-height: 0;
   }
   header {
@@ -124,8 +125,9 @@
     flex: 1;
   }
   .body {
+    flex: 1;
     overflow-y: auto;
-    max-height: 320px;
+    min-height: 0;
   }
   .state {
     padding: var(--sp-4);

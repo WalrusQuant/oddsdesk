@@ -33,6 +33,7 @@
     background: var(--border);
     overflow-y: auto;
     border-left: 1px solid var(--border);
+    min-height: 0;
   }
   .empty {
     padding: var(--sp-5) var(--sp-4);

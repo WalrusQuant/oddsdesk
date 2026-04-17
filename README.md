@@ -11,6 +11,38 @@ and Rust. Ported from the original Python Textual TUI (preserved under
 
 ---
 
+## Download
+
+Grab the latest build from the [Releases page](../../releases).
+
+### macOS (Apple Silicon)
+
+1. Download `OddsDesk_X.Y.Z_aarch64.dmg`.
+2. Open the DMG and drag **OddsDesk.app** to **/Applications**.
+3. On first launch, macOS will complain that the app isn't signed. Two fixes:
+   - Right-click **OddsDesk.app** → **Open** → click **Open** in the dialog.
+   - Or from Terminal:
+     ```bash
+     xattr -dr com.apple.quarantine /Applications/OddsDesk.app
+     ```
+
+### macOS (Intel)
+
+1. Download `OddsDesk_X.Y.Z_x64.dmg`.
+2. Same steps as above.
+
+### Windows (x64)
+
+1. Download `OddsDesk_X.Y.Z_x64_en-US.msi`.
+2. Run the installer. Windows SmartScreen may warn — click **More info** →
+   **Run anyway**.
+
+### Linux
+
+Not shipped yet. Build from source instructions below.
+
+---
+
 ## First-time setup
 
 OddsDesk needs an API key from [The Odds API](https://the-odds-api.com/).

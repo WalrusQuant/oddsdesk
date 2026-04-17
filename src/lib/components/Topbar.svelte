@@ -60,6 +60,7 @@
     gap: var(--sp-4);
     padding: 0 var(--sp-4);
     height: var(--topbar-h);
+    flex-shrink: 0;
     background: var(--bg-sunken);
     border-bottom: 1px solid var(--border);
   }

@@ -42,6 +42,7 @@
     gap: var(--sp-3);
     padding: 0 var(--sp-4);
     height: var(--statusbar-h);
+    flex-shrink: 0;
     border-top: 1px solid var(--border);
     background: var(--bg-sunken);
     font-size: var(--fs-xs);

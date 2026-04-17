@@ -22,6 +22,7 @@
     align-items: center;
     gap: var(--sp-2);
     padding: 6px var(--sp-4);
+    flex-shrink: 0;
     font-size: var(--fs-xs);
     font-weight: 500;
     letter-spacing: 0.02em;

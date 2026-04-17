@@ -32,16 +32,15 @@
 
 <style>
   .shell {
-    display: grid;
-    grid-template-rows: var(--topbar-h) auto minmax(0, 1fr) var(--statusbar-h);
-    /* Body is sized to --app-height (from Rust on resize) so 100% here maps
-     * to the actual native window inner height, not the WebView's `100vh`. */
+    display: flex;
+    flex-direction: column;
     height: 100%;
     width: 100%;
   }
   .main {
     display: grid;
     grid-template-columns: 1fr var(--panel-w);
+    flex: 1;
     min-height: 0;
     overflow: hidden;
   }
