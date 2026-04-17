@@ -6,10 +6,13 @@
   import SidePanels from '$lib/components/SidePanels.svelte';
   import StatusBar from '$lib/components/StatusBar.svelte';
   import SettingsDrawer from '$lib/components/SettingsDrawer.svelte';
+  import CreditBanner from '$lib/components/CreditBanner.svelte';
+  import Toast from '$lib/components/Toast.svelte';
 </script>
 
 <div class="shell">
   <Topbar />
+  <CreditBanner />
   <main class="main">
     <section class="content">
       {#if app.viewMode === 'games'}
@@ -24,12 +27,13 @@
   {#if app.settingsDrawerOpen}
     <SettingsDrawer />
   {/if}
+  <Toast />
 </div>
 
 <style>
   .shell {
     display: grid;
-    grid-template-rows: var(--topbar-h) 1fr var(--statusbar-h);
+    grid-template-rows: var(--topbar-h) auto 1fr var(--statusbar-h);
     height: 100vh;
     min-height: 0;
   }

@@ -7,6 +7,8 @@ pub mod models;
 pub mod service;
 pub mod store;
 
+use crate::errors::AppResult;
+use std::path::PathBuf;
 use std::sync::Arc;
 use tauri_specta::{collect_commands, Builder};
 
@@ -46,15 +48,46 @@ fn specta_builder() -> Builder {
         .typ::<config::Settings>()
 }
 
-fn resolve_project_root() -> std::path::PathBuf {
-    // `pnpm tauri dev` launches from `src-tauri/`; the real project root
-    // is one level up. Fall back to CWD if we can't detect.
-    let cwd = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
-    if cwd.ends_with("src-tauri") {
-        cwd.parent().map(|p| p.to_path_buf()).unwrap_or(cwd)
-    } else {
+/// Resolve the directory where `settings.yaml` and `ev_history.db` live.
+///
+/// Debug builds keep the repo-root behavior so `pnpm tauri dev` reads
+/// from the source tree. Release builds route through `app_config_dir()`
+/// (e.g. `~/Library/Application Support/com.oddsdesk.app` on macOS) and
+/// seed a default `settings.yaml` on first launch.
+fn resolve_project_root(_handle: &tauri::AppHandle) -> PathBuf {
+    #[cfg(debug_assertions)]
+    {
+        let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+        if cwd.ends_with("src-tauri") {
+            return cwd.parent().map(PathBuf::from).unwrap_or(cwd);
+        }
         cwd
     }
+    #[cfg(not(debug_assertions))]
+    {
+        use tauri::Manager;
+        let dir = _handle
+            .path()
+            .app_config_dir()
+            .expect("app_config_dir should resolve");
+        if let Err(e) = std::fs::create_dir_all(&dir) {
+            eprintln!("failed to create app config dir: {e}");
+        }
+        let yaml = dir.join("settings.yaml");
+        if !yaml.exists() {
+            let seed = include_str!("../../settings.yaml");
+            if let Err(e) = std::fs::write(&yaml, seed) {
+                eprintln!("failed to seed settings.yaml: {e}");
+            }
+        }
+        dir
+    }
+}
+
+fn build_service(handle: &tauri::AppHandle) -> AppResult<Arc<service::DataService>> {
+    let project_root = resolve_project_root(handle);
+    let settings = config::load_settings(&project_root)?;
+    Ok(Arc::new(service::DataService::new(settings, project_root)?))
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -70,18 +103,15 @@ pub fn run() {
         )
         .expect("failed to export typescript bindings");
 
-    let project_root = resolve_project_root();
-    let settings = config::load_settings(&project_root).expect("load settings.yaml");
-    let service = Arc::new(
-        service::DataService::new(settings, project_root).expect("init DataService"),
-    );
-
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .manage(service)
         .invoke_handler(builder.invoke_handler())
         .setup(move |app| {
+            use tauri::Manager;
             builder.mount_events(app);
+            let service = build_service(&app.handle())
+                .map_err(|e| format!("failed to init DataService: {e}"))?;
+            app.manage(service);
             Ok(())
         })
         .run(tauri::generate_context!())

@@ -1,8 +1,17 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
+  import { data } from '$lib/stores/data.svelte';
   import { api } from '$lib/ipc';
   import SportTabs from './SportTabs.svelte';
   import IconButton from './ui/IconButton.svelte';
+
+  const loading = $derived(
+    data.loading.games ||
+      data.loading.props ||
+      data.loading.ev ||
+      data.loading.arbs ||
+      data.loading.middles,
+  );
 
   async function handleRefresh() {
     try {
@@ -15,7 +24,7 @@
 
 <header class="topbar">
   <div class="brand">
-    <span class="dot"></span>
+    <span class="dot" class:pulse={loading}></span>
     <span class="name">OddsDesk</span>
   </div>
 
@@ -66,6 +75,20 @@
     border-radius: 999px;
     background: var(--accent);
     box-shadow: 0 0 8px var(--accent);
+    transition: opacity 0.2s;
+  }
+  .dot.pulse {
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.4;
+      transform: scale(0.8);
+    }
   }
   .name {
     font-weight: 600;

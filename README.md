@@ -1,218 +1,202 @@
-# OddsCLI
+# OddsDesk
 
-A terminal-based sports odds ticker that pulls real-time lines from 20+ bookmakers and surfaces +EV betting opportunities.
+Desktop app that pulls real-time sports odds from 20+ US bookmakers and
+surfaces +EV bets, arbitrage opportunities, and middles.
 
-Built with Python, [Textual](https://textual.textualize.io/), and [The Odds API](https://the-odds-api.com/).
+Built with [Tauri 2](https://v2.tauri.app/), [Svelte 5](https://svelte.dev/),
+and Rust. Ported from the original Python Textual TUI (preserved under
+`python-legacy/` as a reference implementation).
 
-![Odds Table](assets/odds-table.png)
+![OddsDesk](assets/odds-table.png)
+
+---
+
+## Download
+
+Grab the latest build from the [Releases page](../../releases).
+
+### macOS (Apple Silicon)
+
+1. Download `OddsDesk_X.Y.Z_aarch64.dmg`.
+2. Open the DMG and drag **OddsDesk.app** to **/Applications**.
+3. On first launch, macOS will complain that the app isn't signed. Two fixes:
+   - Right-click **OddsDesk.app** → **Open** → click **Open** in the dialog.
+   - Or from Terminal:
+     ```bash
+     xattr -dr com.apple.quarantine /Applications/OddsDesk.app
+     ```
+
+### macOS (Intel)
+
+1. Download `OddsDesk_X.Y.Z_x64.dmg`.
+2. Same steps as above.
+
+### Windows (x64)
+
+1. Download `OddsDesk_X.Y.Z_x64_en-US.msi`.
+2. Run the installer. Windows SmartScreen may warn — click **More info** →
+   **Run anyway**.
+
+### Linux
+
+Not shipped yet. Build from source instructions below.
+
+---
+
+## First-time setup
+
+OddsDesk needs an API key from [The Odds API](https://the-odds-api.com/).
+The free tier gives 500 credits/month (enough to try it out); the $30/month
+plan (20,000 credits) is the comfortable floor for regular use.
+
+1. Sign up at the-odds-api.com and copy your API key.
+2. Launch OddsDesk once to let it create its config directory, then edit
+   the files inside:
+
+   | OS | Config directory |
+   | --- | --- |
+   | macOS | `~/Library/Application Support/com.oddsdesk.app/` |
+   | Windows | `%APPDATA%\com.oddsdesk.app\` |
+
+3. Create a `.env` file in that directory with:
+   ```
+   ODDS_API_KEY=your_key_here
+   ```
+4. Edit `settings.yaml` in the same directory to choose your sports,
+   bookmakers, refresh intervals, EV threshold, etc. (You can also edit
+   most of these live from the in-app **Settings** drawer — press `s`.)
+5. Restart the app. You should see live odds populate.
+
+---
 
 ## Features
 
-- **Live odds from 20+ US bookmakers** — FanDuel, DraftKings, BetMGM, ESPN Bet, and more
-- **Three markets** — Toggle between moneyline, spreads, and totals
-- **Alternate lines** — Toggle alternate spreads and totals for expanded market coverage (`l` key)
-- **Player props** — Browse player prop lines across books with sport-specific markets (PTS, REB, AST, Pass Yds, HR, etc.)
-- **DFS book support** — PrizePicks, Underdog, Pick6, and Betr with configurable effective odds for multi-leg pricing
-- **Inline no-vig & EV%** — Fair odds and expected value shown directly in both game and prop tables
-- **Best price highlighting** — Instantly see the best available odds across all books
-- **+EV detection** — Finds +EV game bets and player props using no-vig consensus pricing
-- **Arbitrage detection** — Finds guaranteed-profit two-leg arbs across books with recommended bet sizing and expected payout
-- **Middles detection** — Finds cross-line middle opportunities with hit probability, EV%, and recommended bet sizing
-- **Sticky headers** — Column headers stay visible while scrolling through large tables
-- **Live scores** — Game status, scores, and start times
-- **API credit management** — Tracks usage and gracefully degrades when credits run low
-- **Configurable** — Choose your sports, bookmakers, refresh intervals, and EV threshold
+- **Live odds from 20+ US bookmakers** — FanDuel, DraftKings, BetMGM,
+  BetRivers, Caesars, Fanatics, ESPN BET, and more.
+- **Three markets** per game — moneyline, spreads, totals — with a toggle.
+- **Alternate lines** — expand alternate spreads/totals for coverage across the
+  full line ladder (`l` key).
+- **Player props** across NBA / NFL / MLB / NHL with sport-specific markets
+  (PTS / REB / AST / PaYd / HR / SOG etc.).
+- **DFS books** — PrizePicks, Underdog, Pick6, Betr supported with
+  configurable effective odds (for multi-leg pricing).
+- **Inline no-vig + EV%** right in the table — fair price and the expected
+  value of the best available line on every row.
+- **Best-price highlighting** — the highest quote across all books is marked
+  per outcome.
+- **+EV detection** — market-average no-vig consensus with a configurable
+  threshold. Persisted to SQLite with a "N minutes ago" age column.
+- **Arbitrage detection** — two-leg guaranteed-profit opportunities with
+  recommended stake sizing (Leg A fixed at $100, Leg B equalized) and payout.
+- **Middles detection** — cross-line opportunities with hit probability,
+  window size, and hit/miss profit calculation.
+- **Live scores** — game status, live scores, and start times from The Odds API
+  scores endpoint.
+- **API credit management** — tracks remaining credits from response headers,
+  warns at configurable thresholds, pauses fetching when critical.
+- **Configurable** — in-app settings drawer persists to `settings.yaml`.
 
-## Installation
+---
 
-**Prerequisites:** Python 3.11+ and an API key from [The Odds API](https://the-odds-api.com/) (free tier available, paid plan recommended — see [API Plans](#the-odds-api) below)
-
-```bash
-git clone https://github.com/WalrusQuant/oddsapi.git
-cd oddsapi
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
-```
-
-Copy the example env file and add your API key:
-
-```bash
-cp .env.example .env
-```
-
-```
-ODDS_API_KEY=your_api_key_here
-```
-
-## The Odds API
-
-This app requires an API key from [The Odds API](https://the-odds-api.com/). The free tier includes 500 credits per month, but these get used up quickly — the **$30/month plan (20,000 credits)** is recommended.
-
-### Data Refresh Intervals
-
-| Market Type | Pre-Match Update | In-Play Update |
-|-------------|------------------|----------------|
-| Featured    |    60 seconds    |    40 seconds  | (moneyline, spreads, totals)
-| Additional  |    60 seconds    |    60 seconds  | (player props, alternates, period markets)
-| Futures     |    5 minutes     |    60 seconds  |
-| Betting EX  |    30 seconds    |    20 seconds  | (all markets)
-
-### Links
-
-- [The Odds API](https://the-odds-api.com/) — sign up and manage your API key
-- [API Documentation](https://the-odds-api.com/liveapi/guides/v4/) — endpoints, parameters, and credit usage
-- [Update Intervals](https://the-odds-api.com/sports-odds-data/update-intervals.html) — how often odds data refreshes
-
-## Usage
-
-```bash
-oddscli
-```
-
-Or run directly:
-
-```bash
-python -m app.main
-```
-
-### Keyboard Shortcuts
+## Keyboard shortcuts
 
 | Key | Action |
-|-----|--------|
-| `q` | Quit |
-| `Left` / `Right` | Switch sport |
-| `1` / `2` / `3` | Jump to moneyline / spread / total |
-| `f` | Cycle book filter (games view) |
-| `t` | Cycle prop market filter (props view) |
-| `/` | Search player props (props view) |
-| `r` | Force refresh |
-| `p` | Toggle between games and player props views |
+| --- | --- |
+| `p` | Toggle between games and player props |
 | `e` | Toggle +EV panel |
 | `a` | Toggle arbitrage panel |
 | `m` | Toggle middles panel |
-| `l` | Toggle alternate lines (alt spreads & totals) |
-| `s` | Toggle settings panel |
+| `s` | Toggle settings drawer |
+| `l` | Toggle alternate lines |
+| `r` | Force refresh current sport |
+| `←` / `→` | Previous / next sport |
+| `1` / `2` / `3` | Games: moneyline / spread / total |
+| `f` | Games: cycle game filter (ALL → UPCOMING → LIVE → FINAL) |
+| `t` | Props: cycle market filter |
+| `/` | Props: focus search |
 
-## Player Props
+---
 
-Press `p` to switch to the player props view. Props are fetched concurrently across all events for the selected sport and displayed with:
+## Build from source
 
-- **Player name**, prop type, and Over/Under lines from each book
-- **NOVIG** column — fair no-vig odds derived from the market consensus
-- **EV%** column — inline expected value of the best available price
-- **Best price** highlighted across all books
+Prereqs: Node 22+, pnpm 10+, Rust stable.
 
-Use `t` to filter by specific prop markets. Available markets vary by sport:
-
-| Sport | Markets |
-|-------|---------|
-| NBA | PTS, REB, AST, 3PT, PRA |
-| NFL | PaYd, PaTD, RuYd, ReYd, Rec, ATD |
-| MLB | HR, Hits, TB, K |
-| NHL | Goal, AST, SOG |
-
-### DFS Books
-
-DFS platforms (PrizePicks, Underdog, Pick6, Betr) are supported with configurable effective odds to account for multi-leg pricing differences. Set overrides in `settings.yaml`:
-
-```yaml
-dfs_books:
-  prizepicks: -137
-  underdog: -137
-  pick6: -137
-  betr_us_dfs: -137
+```bash
+git clone https://github.com/<your-org>/oddsdesk.git
+cd oddsdesk
+pnpm install
+pnpm tauri dev          # hot-reloading dev build
+pnpm tauri build        # release build → src-tauri/target/release/bundle/
 ```
 
-## +EV Detection
+In dev mode the app reads `settings.yaml` and `.env` from the repo root
+instead of the per-user config directory.
 
-Toggle the EV panel with `e` to see bets where a bookmaker's odds exceed the fair market price. The panel shows +EV opportunities for both game lines and player props.
-
-![EV Panel](assets/ev-panel.png)
-
-The engine uses **market-average no-vig consensus pricing** to estimate fair odds:
-
-1. Collects odds from all available bookmakers for each outcome
-2. Converts to implied probabilities and averages across books
-3. Removes the vig (normalizes probabilities to sum to 1.0)
-4. Compares each book's actual odds against the derived fair odds
-5. Flags bets where EV% exceeds the configured threshold (default 2%)
-
-For player props, Over/Under pairs are normalized independently per (player, market, line) to prevent inflated EV calculations.
-
-Requires at least 3 books contributing to the market average for reliability. Only pre-game lines are evaluated.
-
-## Arbitrage Detection
-
-Toggle the arb panel with `a` to see guaranteed-profit opportunities where the sum of implied probabilities across two books is less than 100%.
-
-Each arb row shows:
-
-- **Profit %** — guaranteed return regardless of outcome
-- **Book A / Book B** — which sportsbooks to place each leg
-- **Leg A / Leg B** — outcome, line, and odds for each side
-- **Bet A / Bet B** — recommended wager amounts (Leg A fixed at $100, Leg B sized to equalize payout)
-- **Payout** — guaranteed return in dollars
-- **Profit$** — guaranteed profit in dollars
-
-Arbs are detected across all markets including alternate lines when enabled. Only pre-game events are evaluated.
-
-## Middles Detection
-
-Toggle the middles panel with `m` to see cross-line opportunities where different books offer different lines, creating a window where both bets can win.
-
-For example: Over 220.5 at Book A and Under 222.5 at Book B — if the total lands on 221 or 222, both legs win.
-
-Each middle row shows:
-
-- **EV%** — expected value accounting for hit probability
-- **HIT%** — estimated probability of landing in the middle window (based on sport-specific scoring density)
-- **WIN** — window size (number of points in the middle)
-- **Bet A / Bet B** — recommended wager amounts (Leg A fixed at $100, Leg B sized to equalize the miss scenario)
-- **HIT$** — profit if the middle hits (both legs win)
-- **MISS$** — profit/loss if the middle misses (one wins, one loses)
-
-Middles are detected on spreads and totals markets. The MISS$ column is color-coded green when you still profit on a miss (also an arb) or red when you take a small loss compensated by the larger hit payout.
+---
 
 ## Configuration
 
-Press `s` to view your current settings, or edit `settings.yaml` directly:
-
-![Settings Panel](assets/settings-panel.png)
+All settings live in `settings.yaml`. Most fields are editable from the
+in-app Settings drawer; the full list with defaults:
 
 | Setting | Default | Description |
-|---------|---------|-------------|
-| `sports` | NFL, NBA, MLB, NHL, NCAAB | Which sports to display |
+| --- | --- | --- |
+| `sports` | NFL, NBA, MLB, NHL, NCAAB | Which sports to show as tabs |
 | `bookmakers` | 20+ US books | Books to compare odds across |
 | `regions` | us, us2, us_ex, us_dfs | API regions to pull from |
 | `odds_refresh_interval` | 60 | Seconds between odds refreshes |
-| `scores_refresh_interval` | 60 | Seconds between score refreshes |
-| `ev_threshold` | 2.0 | Minimum EV% to flag a bet |
-| `ev_odds_min` | -200 | Only show EV bets at or above this American odds |
-| `ev_odds_max` | 200 | Only show EV bets at or below this American odds |
-| `odds_format` | american | `american` or `decimal` |
+| `scores_refresh_interval` | 60 | Seconds between scores refreshes |
 | `props_refresh_interval` | 300 | Seconds between props refreshes |
-| `props_max_concurrent` | 5 | Max concurrent event fetches for props |
-| `alt_lines_enabled` | false | Include alternate spreads/totals (toggle at runtime with `l`) |
-| `arb_enabled` | true | Enable arbitrage detection |
-| `arb_min_profit_pct` | 0.1 | Minimum profit % to display an arb |
-| `middle_enabled` | true | Enable middles detection |
+| `props_max_concurrent` | 5 | Max parallel event fetches for props |
+| `ev_threshold` | 2.0 | Minimum EV% to flag a bet |
+| `ev_odds_min` / `ev_odds_max` | -200 / 200 | Restrict EV flagging to a price range |
+| `odds_format` | american | `american` or `decimal` |
+| `alt_lines_enabled` | false | Fetch alternate spreads/totals |
+| `arb_enabled` | true | Run arb detection |
+| `arb_min_profit_pct` | 0.1 | Minimum profit % to surface an arb |
+| `middle_enabled` | true | Run middles detection |
 | `middle_min_window` | 0.5 | Minimum point window for a middle |
 | `middle_max_combined_cost` | 1.08 | Max combined implied prob for middles |
-| `dfs_books` | {} | DFS book effective odds overrides |
-| `props_markets` | per-sport | Player prop markets to fetch per sport |
-| `low_credit_warning` | 50 | Show warning at this credit level |
-| `critical_credit_stop` | 10 | Pause API calls at this credit level |
+| `dfs_books` | {} | DFS book → effective odds overrides |
+| `props_markets` | per-sport | Which prop markets to fetch per sport |
+| `low_credit_warning` | 50 | Show warning at this credit balance |
+| `critical_credit_stop` | 10 | Pause API calls at this balance |
 
-## API Credit Usage
+---
 
-The Odds API uses a credit system. The app tracks your remaining credits via response headers and adjusts behavior:
+## How detection works
 
-- **Normal** — Fetches odds, scores, and props on configured intervals
-- **Low credits** (< 50 remaining) — Yellow warning in status bar
-- **Critical** (< 10 remaining) — All API calls pause; cached data continues to display
-- **Props guard** — Props fetching pauses at 3x the critical threshold since each sport requires multiple per-event API calls
+**+EV**: for each outcome, the engine averages the implied probabilities
+across every book offering it, normalizes to remove the vig (so the pair
+sums to 1), and compares each book's actual price to that fair probability.
+If the best price at a book yields EV ≥ `ev_threshold`, it's flagged.
+
+**Arbitrage**: at the same line, if the best prices on opposite outcomes
+across different books have implied probabilities summing to less than 1,
+there's a guaranteed-profit arb. Stake sizing equalizes payout across both legs.
+
+**Middles**: cross-line opportunities where Book A offers Over 220.5 and
+Book B offers Under 222.5, creating a window (221 or 222 totals land both legs).
+Hit probability is estimated from sport-specific point density.
+
+---
+
+## Project status
+
+First desktop release is `v0.1.0` — functional, unsigned, personal-use.
+A follow-up pass (Phase 3b in `tasks/todo.md`) will fix five known engine bugs
+identified during the Rust port:
+
+- Alt-line over-normalization in no-vig consensus
+- Middles sizing inconsistency between engine EV and panel display
+- `min_books` filter applying across all outcomes instead of per-outcome
+- Spread-middle same-team edge case
+- `american_to_decimal(0)` silent fallback
+
+These are preserved for parity with the Python reference in v0.1.0.
+
+---
 
 ## License
 
-[MIT](LICENSE)
+MIT. See [LICENSE](LICENSE).
