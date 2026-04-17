@@ -2,99 +2,260 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Stack
+
+- **Tauri 2** — desktop shell (Rust core + WebView frontend)
+- **Svelte 5** + SvelteKit with `adapter-static` (SPA mode) + TypeScript
+- **Vite** dev server on port 1420
+- **Rust stable** (edition 2021) — backend math, API client, persistence
+- **rusqlite** (bundled) — EV history
+- **reqwest** (rustls-tls) + **tokio** — async HTTP
+- **tauri-specta v2** + **specta-typescript** — Rust types + typed commands → `src/lib/bindings.ts`
+- **serde_yaml** + **dotenvy** — `settings.yaml` + `.env` config
+- **vitest** — frontend unit tests
+- **pnpm** 10 — package manager
+
+A frozen Python Textual TUI lives in `python-legacy/` as a behavioral reference. Do **not** edit it — it's the source of truth for Phase 3b engine bug fixes (see `tasks/todo.md`). The port is parity-tested via goldens at `src-tauri/tests/fixtures/engine/golden/`.
+
 ## Running the App
 
 ```bash
-source .venv/bin/activate
-python -m app.main          # or: oddscli (if installed via pip install -e .)
+pnpm install                # once
+pnpm tauri dev              # hot-reloading desktop app
+pnpm tauri build            # release bundle → src-tauri/target/release/bundle/
 ```
 
-Requires `ODDS_API_KEY` in `.env` and user prefs in `settings.yaml`.
+Dev mode reads `settings.yaml` + `.env` from repo root. Release mode reads from `tauri::path::app_config_dir()` (e.g. `~/Library/Application Support/com.oddsdesk.app/`) and seeds `settings.yaml` on first launch via `include_str!`.
+
+`ODDS_API_KEY` must be set in `.env`. The API key is hidden from the frontend bindings (`#[specta(skip)]` + `#[serde(skip_serializing)]`) so `save_settings` can't clobber it.
 
 ## Development Setup
 
 ```bash
+# Frontend
+pnpm install
+
+# Rust (dev build)
+cargo check --manifest-path src-tauri/Cargo.toml
+
+# Python reference (optional, for regenerating engine goldens)
+cd python-legacy
 python -m venv .venv
 source .venv/bin/activate
-pip install -e .
+pip install -e ".[dev]"
 ```
 
-### Tests & Linting
-
-Dev tools are configured in `pyproject.toml` under `[project.optional-dependencies] dev`:
+### Tests & Checks
 
 ```bash
-pip install -e ".[dev]"
-pytest tests/                        # run all tests
-pytest tests/test_ev.py              # single test file
-pytest tests/test_ev.py -k "test_name"  # single test
-ruff check app/                      # lint
-mypy app/                            # type check
+# Rust (95 tests: lib unit + 8 api_client + 13 data_service + 6 engine_parity + 29 engine_unit + 36 store + 3 bindings)
+cargo test --manifest-path src-tauri/Cargo.toml
+
+# Frontend Vitest (23 tests: display helpers)
+pnpm test
+
+# Type-check Svelte + TS
+pnpm check
+
+# SPA build (must pass before tauri build)
+pnpm build
+
+# Lint Rust on save (optional)
+cargo clippy --manifest-path src-tauri/Cargo.toml
 ```
 
-pytest uses `asyncio_mode = "auto"`. Ruff targets py312, line-length 100, ignores E501.
+A single engine parity regeneration step (Python → Rust goldens) lives in `python-legacy/scripts/generate_engine_fixtures.py`. Only rerun if you intentionally change the Python engine (generally don't — the Rust port is authoritative).
 
 ## Architecture
 
-Three-layer async app: **API → Services → UI** (Textual 8.0 TUI).
+Three layers: **Rust backend** ↔ **Tauri IPC (typed)** ↔ **Svelte frontend**.
 
-### API Layer (`app/api/`)
-- `client.py` — Async httpx wrapper; injects API key, parses credit headers
-- `endpoints.py` — Typed fetch functions: `get_sports()`, `get_odds()`, `get_scores()`, `get_events()`, `get_event_odds()`, `get_props_for_events()`
-- `models.py` — Pydantic v2 models: `Sport`, `Event`, `Score`, `GameRow`, `Bookmaker`, `Market`, `OutcomeOdds`, `PropRow`
+### Rust backend (`src-tauri/src/`)
 
-### Services Layer (`app/services/`)
-- `data_service.py` — Central orchestrator; coordinates API calls, caching, budget, and EV detection. Merges scores + odds into `GameRow` objects. Fetches props per-event with semaphore-limited concurrency.
-- `ev.py` — EV/arb/middles engine. Models: `EVBet`, `ArbBet`, `MiddleBet`. Key functions: `find_ev_bets()`, `find_arb_bets()`, `find_middle_bets()`, and their prop variants (`find_prop_arb_bets()`, `find_prop_middle_bets()`). Computes no-vig consensus odds from 3+ books, compares each book's odds to fair price, filters by `ev_threshold`. Props EV normalizes Over/Under pairs independently per (player, market, line). Arb detection finds two-leg guaranteed-profit opportunities. Middles detection finds cross-line windows with sport-specific hit probability estimation.
-- `ev_store.py` — SQLite persistence for EV bets (`ev_history.db`); drops/recreates table on init. Tracks both game and prop EV via `is_prop` flag.
-- `cache.py` — In-memory TTL cache keyed by `"{sport}:{data_type}"`
-- `budget.py` — Tracks API credits from response headers; blocks fetches when critical
+```
+src-tauri/src/
+  main.rs              # Tauri entry → lib::run()
+  lib.rs               # specta builder + command registration + AppHandle-aware setup
+  models.rs            # data types (specta Type derived → TS bindings)
+  config.rs            # Settings struct + load_settings/save_settings_yaml
+  errors.rs            # AppError (thiserror)
+  api/
+    mod.rs
+    client.rs          # OddsApiClient (reqwest) + CreditInfo parsing
+    endpoints.rs       # get_sports, get_odds, get_scores, get_events, get_event_odds, get_props_for_events + OddsQuery
+  engine/              # pure math — Python-parity-tested
+    mod.rs
+    odds.rs            # american_to_decimal, _implied_prob, prob_to_american + py_float_str/outcome_key
+    novig.rs           # calculate_market_avg_no_vig, compute_inline_ev
+    ev.rs              # find_ev_bets (game + prop) + EvOptions
+    arb.rs             # find_arb_bets, find_prop_arb_bets
+    middles.rs         # find_middle_bets, find_prop_middle_bets + point_density + estimate_middle_hit_prob + compute_middle_ev
+    sort.rs            # deterministic tie-break sorts for parity
+  store/
+    mod.rs
+    ev_store.rs        # EvStore (rusqlite + spawn_blocking); upsert/deactivate/query
+    cache.rs           # TtlCache<V: Clone> (RwLock, lazy eviction)
+    budget.rs          # BudgetTracker (monotonic update, snapshot)
+  service/
+    mod.rs
+    data_service.rs    # DataService — orchestrator. Arc<Inner> with RwLock<Settings>, Mutex<BudgetTracker>, EvStore, 6 typed TtlCaches
+  commands.rs          # 15 #[tauri::command] #[specta::specta] thin wrappers
+  tests/               # integration tests (wiremock-backed)
+    api_client.rs
+    data_service.rs
+    engine_parity.rs   # 6 golden-file tests (floats within 1e-6)
+    engine_unit.rs     # 29 ported Python unit tests
+    store.rs           # 36 tests (budget + cache + ev_store)
+    fixtures/          # hand-crafted API fixtures + engine input events + Python goldens
+```
 
-### UI Layer (`app/ui/`)
-- `app.py` — `OddsTickerApp` (Textual App subclass); manages lifecycle, keybindings, auto-refresh timers, settings panel rendering
-- `widgets/games_table.py` — Multi-book odds grid; toggles between h2h/spreads/totals markets with inline no-vig & EV%
-- `widgets/props_table.py` — Player props paired Over/Under display with inline EV, sticky header, sport-aware market filtering
-- `widgets/ev_panel.py` — +EV opportunities panel (toggle with `e` key); shows both game and prop EV bets
-- `widgets/arb_panel.py` — Arbitrage opportunities panel (toggle with `a` key); shows guaranteed-profit two-leg arbs with bet sizing
-- `widgets/middles_panel.py` — Middles (cross-line) opportunities panel (toggle with `m` key); shows EV%, hit probability, and window size
-- `widgets/sport_tabs.py` — Sport navigation tabs with reactive `active_index`; posts `SportTabs.Changed` messages
-- `widgets/status_bar.py` — Credits, refresh time, warnings, keybinding hints
-- `widgets/constants.py` — Shared constants: `BOOK_SHORT` (display abbreviations), `PROP_LABELS` (market key → short label), `MAX_DISPLAY_BOOKS`
-- `styles.tcss` — Dark theme CSS
+### Frontend (`src/`)
 
-### Data Flow
+```
+src/
+  app.css                  # design tokens (colors, spacing, type, layout) + resets
+  app.html                 # SvelteKit entry
+  lib/
+    bindings.ts            # GENERATED by tauri-specta — do not edit
+    ipc.ts                 # api.* typed wrappers (unwrap Result<T, string>)
+    polling.ts             # reactive setInterval with error guard
+    keybindings.ts         # window-level keydown handler
+    display/               # pure TS helpers for tables (parity with Rust engine::odds)
+      odds.ts              # americanToDecimal, _implied_prob, probToAmerican
+      consensus.ts         # computeInlineEv, consensusSpread, consensusTotal
+      prices.ts            # getBookPrice, bestPriceWithBook, allPrices, alt points, isDfs
+      format.ts            # odds/ev/minutes-ago/time/truncate
+      constants.ts         # BOOK_LABELS, PROP_LABELS, MARKET_LABELS, SPORT_LABELS, GAME_FILTERS
+      *.test.ts            # Vitest parity tests
+    stores/                # Svelte 5 class-runes singletons
+      app.svelte.ts        # currentSport, viewMode, visiblePanels, altLines, gamesMarket, gameFilter, propsMarket, propsSearch + cyclers
+      data.svelte.ts       # games/props/ev/arbs/middles + loading flags + errors
+      budget.svelte.ts     # BudgetState
+      settings.svelte.ts   # Settings
+    components/
+      Topbar.svelte        # brand + sport tabs + view toggle + refresh + settings; pulse dot while loading
+      SportTabs.svelte
+      StatusBar.svelte     # credits, refresh age, mode, keybind hints
+      SidePanels.svelte    # stacked EV/Arb/Middles with empty state
+      SettingsDrawer.svelte  # 8-section form: sports, books, EV thresholds, refresh, arb/middle, DFS, credits, odds format
+      CreditBanner.svelte  # warning strip above main when budget low/critical
+      Toast.svelte         # bottom-right error stack tied to data.errors
+      GamesTable.svelte    # CSS grid, sticky header, 2 rows/game, inline no-vig + EV%, best-price + DFS markers, alt-line expansion
+      PropsTable.svelte    # grouped by game, sticky header, search + market filter, Over/Under paired rows
+      panels/
+        EvPanel.svelte     # EV badge + book/pick/odds/fair/#books/detected-at
+        ArbPanel.svelte    # profit badge + two-leg detail with $100 / equalized stakes + payout
+        MiddlesPanel.svelte  # EV badge + two-leg lines + window/hit% + hit$/miss$
+      tables/
+        SegmentedControl.svelte  # generic T-keyed pill control
+      ui/
+        Button.svelte, IconButton.svelte, Toggle.svelte
+  routes/
+    +layout.svelte         # bootstraps settings, 4 polling effects (games, props, signals, budget), initKeybindings
+    +layout.ts             # ssr=false
+    +page.svelte           # shell: Topbar / CreditBanner / main (content + SidePanels) / StatusBar / SettingsDrawer / Toast
+```
 
-**Games view:** User action → `_load_data()` → `get_game_rows()` (merge scores + odds) → `get_ev_bets()` / `find_arb_bets()` / `find_middle_bets()` → `ticker.update_games()` + panels update
+### Data flow
 
-**Props view:** User action → `_load_props()` → `fetch_props()` (per-event API calls) → `get_prop_rows()` → `get_prop_ev_bets()` / `find_prop_arb_bets()` / `find_prop_middle_bets()` → `props_table.update_props()` + panels update
+1. `+layout.svelte` loads `Settings` via `api.getSettings()` on mount, then sets up four polling `$effect`s:
+   - **games** polling: `api.loadGames(sport)` every `odds_refresh_interval` s (only active in games view)
+   - **props** polling: `api.loadProps(sport)` every `props_refresh_interval` s (only in props view)
+   - **signals** polling: `api.findEv/findArbs/findMiddles` (or prop variants) every 30 s
+   - **budget** polling: `api.getBudget()` every 30 s
+2. Store writes trigger Svelte reactivity → tables re-render.
+3. All display math (`computeInlineEv`, `bestPriceWithBook`) runs client-side in TS using `src/lib/display/*`. The engine math (`find_ev_bets` etc.) runs server-side in Rust and is authoritative for persisted output.
 
-Workers use `run_worker(exclusive=True, group="load")` to prevent concurrent fetches.
+### Tauri commands (`commands.rs`)
 
-### Keybindings (app.py BINDINGS)
-`q` quit, `left/right` switch sport, `1/2/3` moneyline/spread/total, `r` refresh, `p` toggle games/props view, `e` EV panel, `a` arb panel, `m` middles panel, `f` book filter, `t` cycle prop market filter, `/` search props, `l` toggle alt lines, `s` settings panel.
+15 commands, all `#[tauri::command] #[specta::specta]`, all return `Result<T, String>`:
 
-### View Mode Switching
-App maintains `_view_mode` ("games" or "props"), toggled with `p`. Switches visibility via CSS `display` + class toggling. Games and props have independent auto-refresh timers (`_odds_timer`, `_scores_timer`, `_props_timer`).
+- `list_sports`
+- `load_games(sport)` / `load_props(sport)`
+- `find_ev(sport)` / `find_prop_ev(sport)`
+- `find_arbs(sport)` / `find_prop_arbs(sport)`
+- `find_middles(sport)` / `find_prop_middles(sport)`
+- `stored_ev(sport, is_props)`
+- `get_budget()` / `get_settings()`
+- `save_settings(update)` (api_key is preserved server-side, never sent)
+- `set_alt_lines(enabled)` / `force_refresh(sport)`
 
-### DFS Books
-DFS platforms (PrizePicks, Underdog, etc.) get odds overrides from `settings.yaml` `dfs_books` dict. Applied via `_resolve_price()` in games_table and `_effective_price()` in ev.py — replaces API odds with the configured effective juice.
+All three `find_*` commands that deal with EV persist to SQLite and deactivate missing rows. `find_*_arbs` and `find_*_middles` are pure transforms.
 
-### Config Loading (`app/config.py`)
-`load_settings()` merges `.env` (API key via dotenv) + `settings.yaml` (prefs via PyYAML) into a Pydantic `Settings` model.
+### Keybindings
 
-## Textual 8.0 Gotchas
+Handled by `src/lib/keybindings.ts` (window-level `keydown`, respects `<input>` / `<textarea>` focus):
 
-- **Never name a method `_render()` on a Widget** — shadows Textual's internal method. Use `_refresh_content()` or similar.
-- **Never initialize `Static("")`** — causes `visual = None` render errors. Use non-empty content.
-- **Never `await` long async ops in `on_mount()`** — blocks the message loop. Use `run_worker()` instead.
-- **Never name a guard flag `_ready`** — shadows Textual's internal `_ready()`. The app uses `_init_done`.
-- **Avoid em-dash "—" in `.center(N)` columns** — it's double-width in terminals. Use ASCII dash "-".
+- `p` games/props toggle
+- `e` / `a` / `m` EV / arb / middles panel
+- `s` settings drawer
+- `l` alt lines (server-synced)
+- `r` force refresh
+- `←` / `→` previous / next sport
+- `1` / `2` / `3` market toggle (games view only)
+- `f` cycle game filter (games view only)
+- `t` cycle props market (props view only)
+- `/` focus props search (props view only)
 
-## Key Conventions
+### Config + settings
 
-- Python 3.12, type hints throughout (using `X | Y` union syntax)
-- All I/O is async (httpx, SQLite via sync in workers, Textual timers)
-- Reactive properties on widgets drive state → watchers post messages → App handlers respond
-- EV reference: market-average no-vig consensus pricing (not pinned to any single book)
-- Inline EV (`compute_inline_ev()`) displayed on-the-fly in tables; persistent EV stored in SQLite for history
-- Props require per-event API calls (not bulk), so they cost more credits and refresh less frequently
+- `.env` → `ODDS_API_KEY` (dotenvy; never leaves Rust)
+- `settings.yaml` → user preferences (serde_yaml)
+- `save_settings` preserves `api_key` server-side (frontend never sees it) and clears cache on write
+- Yaml comments are dropped on save (documented tradeoff)
+
+### DFS books
+
+DFS platforms (PrizePicks, Underdog, Pick6, Betr) get effective-odds overrides via `settings.dfs_books`. Applied in two places:
+- `engine::ev::effective_price` — for flagged bets
+- `display/prices.ts` — for inline table rendering
+
+Raw API prices are used for **consensus** calculation (Rust `calculate_market_avg_no_vig`) so synthetic DFS odds don't pollute the no-vig reference. DFS rows in tables are marked with `*` and magenta color.
+
+### Alt lines
+
+`alt_lines_enabled` toggles per-event fetches of `alternate_spreads` + `alternate_totals`. Merged into the event's bookmakers in-place. Rust: `DataService::fetch_alt_lines`. Frontend table adds expanded sub-rows per alt point when the setting is on.
+
+### Parity between Rust engine and TS display
+
+- **Rust engine** (`src-tauri/src/engine/`) is authoritative for stored/persisted output (EVBet, ArbBet, MiddleBet). Tested against Python goldens to 1e-6.
+- **TS display helpers** (`src/lib/display/`) are a parallel port that compute inline table cells (no-vig column, EV% column) without round-tripping to Rust for every render. Vitest validates their math matches the Rust engine.
+- If a bug is found in Rust, the Python fixture generator may need updating; if in TS, just the TS tests.
+
+## Common gotchas
+
+- **Tauri state**: `DataService` is built inside the `setup` closure (needs `AppHandle` for `app_config_dir` in release). Commands get it via `State<'_, Arc<DataService>>`.
+- **`#[specta(skip)]` + `#[serde(skip_serializing)]`** on `Settings.api_key` is how we keep the key out of the frontend. Breaking either will leak it into `bindings.ts`.
+- **HashMap iteration order**: deterministic parity in `engine/arb.rs` and `engine/middles.rs` requires sorting side_keys alphabetically and preserving team/player insertion order. `engine/sort.rs` applies a total order to outputs.
+- **Py-float string format**: `engine::odds::py_float_str` exists to match Python's `f"{x}"` format (e.g. `3.0` → `"3.0"`, not `"3"`). Used for `outcome_point_str` in SQLite and internal group keys.
+- **Svelte 5 runes in `.svelte.ts` files**: use class-based stores (`class S { field = $state(0) }`) and export singletons. `$derived` inside classes uses getter methods.
+- **Bindings regenerate on `cargo test`** via the `bindings_test::export_typescript_bindings` test. If you touch `models.rs` or `commands.rs`, run `cargo test` before `pnpm check`.
+- **Parity test non-determinism**: if `engine_parity` tests start flaking, it's almost certainly HashMap iteration order in a newly added code path. Sort before iterating.
+
+## Release workflow
+
+Tag-triggered GitHub Actions build:
+
+```bash
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+Matrix (macos-latest aarch64, macos-13 x64, windows-latest x64) runs `tauri-apps/tauri-action@v0` → unsigned DMG + MSI in a **draft** GitHub Release. User manually reviews + publishes.
+
+Binaries are unsigned. Install docs cover:
+- macOS: right-click → Open, or `xattr -dr com.apple.quarantine /Applications/OddsDesk.app`
+- Windows: SmartScreen "More info" → "Run anyway"
+
+## Project plan
+
+`tasks/todo.md` tracks the 8-phase migration. All phases complete through Phase 8. Outstanding: **Phase 3b** — five Python engine bugs deliberately preserved for parity (alt-line over-normalization, middles sizing inconsistency, `min_books` per-outcome, spread middle same-team guard, `american_to_decimal(0)` fallback).
+
+## Key conventions
+
+- Rust 2021 edition, `AppResult<T>` alias at module boundaries, `thiserror` for AppError
+- `tokio::task::spawn_blocking` for SQLite; never hold the connection mutex across an `.await`
+- Every Tauri command returns `Result<T, String>` (stringified `AppError` at the boundary)
+- TypeScript: always go through `api.*` from `ipc.ts`, never call `commands.*` directly in components
+- Svelte 5 runes everywhere; stores are `.svelte.ts` class singletons, not legacy stores
+- CSS: tokens from `app.css` (`--bg`, `--surface`, `--accent`, `--ev-pos`, etc.), mono font for numerics, sans for UI chrome
+- Tests: Rust integration tests under `src-tauri/tests/`, pure-TS tests as `.test.ts` next to source, no component/snapshot tests
