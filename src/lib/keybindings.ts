@@ -1,23 +1,8 @@
 import { app } from './stores/app.svelte';
 import { settings } from './stores/settings.svelte';
+import { data } from './stores/data.svelte';
 import { api } from './ipc';
 
-/**
- * Attach the global keybinding listener. Returns a cleanup function.
- * Match the Python TUI shortcuts where possible:
- *   p  toggle games/props view
- *   e  toggle EV panel
- *   a  toggle arb panel
- *   m  toggle middles panel
- *   s  toggle settings drawer
- *   l  toggle alt lines
- *   r  force refresh current sport
- *   ←  previous sport
- *   →  next sport
- *   1/2/3  market toggle          (Phase 7)
- *   /      search props           (Phase 7)
- *   f/t    book/market filter     (Phase 7)
- */
 export function initKeybindings(): () => void {
   const onKey = async (e: KeyboardEvent) => {
     const tag = (e.target as HTMLElement | null)?.tagName;
@@ -63,10 +48,39 @@ export function initKeybindings(): () => void {
       case 'ArrowRight':
         app.cycleSport(settings.current?.sports ?? [], 1);
         break;
+      case '1':
+        if (app.viewMode === 'games') app.setGamesMarket('h2h');
+        break;
+      case '2':
+        if (app.viewMode === 'games') app.setGamesMarket('spreads');
+        break;
+      case '3':
+        if (app.viewMode === 'games') app.setGamesMarket('totals');
+        break;
+      case 'f':
+        if (app.viewMode === 'games') app.cycleGameFilter();
+        break;
+      case 't':
+        if (app.viewMode === 'props') {
+          const markets = Array.from(new Set(data.props.map((r) => r.market_key))).sort();
+          app.cyclePropsMarket(markets);
+        }
+        break;
+      case '/':
+        if (app.viewMode === 'props') {
+          const search = document.querySelector<HTMLInputElement>('#props-search');
+          search?.focus();
+          search?.select();
+          e.preventDefault();
+        }
+        break;
       default:
         return;
     }
-    e.preventDefault();
+    if (!['/', '1', '2', '3'].includes(e.key) || app.viewMode !== 'games') {
+      // Avoid stealing numeric keys when they'd be typed elsewhere.
+      e.preventDefault();
+    }
   };
 
   window.addEventListener('keydown', onKey);

@@ -1,8 +1,8 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
   import Topbar from '$lib/components/Topbar.svelte';
-  import GamesView from '$lib/components/GamesView.svelte';
-  import PropsView from '$lib/components/PropsView.svelte';
+  import GamesTable from '$lib/components/GamesTable.svelte';
+  import PropsTable from '$lib/components/PropsTable.svelte';
   import SidePanels from '$lib/components/SidePanels.svelte';
   import StatusBar from '$lib/components/StatusBar.svelte';
   import SettingsDrawer from '$lib/components/SettingsDrawer.svelte';
@@ -13,9 +13,9 @@
   <main class="main">
     <section class="content">
       {#if app.viewMode === 'games'}
-        <GamesView />
+        <GamesTable />
       {:else}
-        <PropsView />
+        <PropsTable />
       {/if}
     </section>
     <SidePanels />
