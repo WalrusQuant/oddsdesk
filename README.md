@@ -26,10 +26,7 @@ Grab the latest build from the [Releases page](../../releases).
      xattr -dr com.apple.quarantine /Applications/OddsDesk.app
      ```
 
-### macOS (Intel)
-
-1. Download `OddsDesk_X.Y.Z_x64.dmg`.
-2. Same steps as above.
+Intel Macs aren't shipped as a prebuilt binary — build from source (instructions below).
 
 ### Windows (x64)
 
